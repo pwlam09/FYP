@@ -18,6 +18,8 @@
 package pixelitor;
 
 import com.bric.util.JVM;
+
+import manga.page.MangaGenerator;
 import net.jafama.FastMath;
 import pixelitor.colors.FgBgColors;
 import pixelitor.colors.FillType;
@@ -42,6 +44,7 @@ import javax.swing.plaf.MenuBarUI;
 import java.awt.EventQueue;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
+import java.util.concurrent.ForkJoinPool.ManagedBlocker;
 
 /**
  * The main class
@@ -78,6 +81,17 @@ public class Pixelitor {
                 // here because it is IO-intensive and it should not
                 // slow down the loading of the GUI
                 preloadFontNames();
+                
+                /**
+                 * @author PuiWa
+                 * initialize the settings for manga
+                 */
+            	MangaGenerator.addNewMangaPage();
+            	//MangaGenerator.addNewMangaPage();
+            	//MangaGenerator.addNewPanelLayer();
+            	//MangaGenerator.addNewPanelLayer();
+            	//MangaGenerator.setActiveLayer();
+            	MangaGenerator.drawMangaPanels();
             } catch (Exception e) {
                 Dialogs.showExceptionDialog(e);
             }

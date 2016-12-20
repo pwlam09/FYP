@@ -40,7 +40,12 @@ import static java.awt.AlphaComposite.SRC_OVER;
  * A Paint type based on two endpoints of a UserDrag.
  * Used as a fill type in the Shapes Tool.
  */
-enum TwoPointBasedPaint {
+/**
+ * 
+ * @author PuiWa
+ * scope changed to public, originally not defined
+ */
+public enum TwoPointBasedPaint {
     LINEAR_GRADIENT {
         @Override
         protected Paint getPaint(UserDrag ud) {

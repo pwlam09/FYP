@@ -430,6 +430,14 @@ public class ShapesTool extends Tool {
     public void setAction(ShapesAction action) {
         actionModel.setSelectedItem(action);
     }
+    
+    /**
+     * @author PuiWa
+     * This is for setting stroke color
+     */
+    public void setStrokFill(TwoPointBasedPaint twoPointBasedPaint) {
+    	strokeFillModel.setSelectedItem(twoPointBasedPaint);
+    }
 
     @Override
     public DebugNode getDebugNode() {
