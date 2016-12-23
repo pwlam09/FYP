@@ -439,6 +439,14 @@ public class ShapesTool extends Tool {
     	strokeFillModel.setSelectedItem(twoPointBasedPaint);
     }
 
+    /**
+     * @author PuiWa
+     * This is for setting fill color
+     */
+    public void setFill(TwoPointBasedPaint twoPointBasedPaint) {
+    	fillModel.setSelectedItem(twoPointBasedPaint);
+    }
+    
     @Override
     public DebugNode getDebugNode() {
         DebugNode node = super.getDebugNode();

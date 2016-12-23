@@ -8,12 +8,14 @@ import pixelitor.tools.ShapeType;
 import pixelitor.tools.ShapesAction;
 import pixelitor.tools.Tools;
 import pixelitor.tools.UserDrag;
+import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
 import pixelitor.Canvas;
 import pixelitor.Composition;
 import pixelitor.NewImage;
 
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 /**
@@ -26,6 +28,7 @@ public final class MangaGenerator {
 	private static int untitledCount = 1;
 	private static ArrayList<ImageLayer> layerList=new ArrayList<>();
 	private static ArrayList<Composition> compositionList=new ArrayList<>();
+	
 	
 	private MangaGenerator() {
 		
@@ -48,6 +51,10 @@ public final class MangaGenerator {
 		layerList.get(i).makeActive(AddToHistory.YES);
 	}
 	
+	
+	/**
+	 * Draw 6 manga panels on different layers
+	 */
 	public static void drawMangaPanels() {
 		// Declare 6 layers for 6 panels 
     	for (int i=0; i<6; i++) {
@@ -79,5 +86,15 @@ public final class MangaGenerator {
             shapesTool.paintShapeOnIC(layerList.get(i*2), leftPanelDrag);
             shapesTool.paintShapeOnIC(layerList.get(i*2+1), rightPanelDrag);
         }
+	}
+	
+	public static void drawWordBalloons() {
+        ShapesTool shapesTool = Tools.SHAPES;
+        shapesTool.setShapeType(ShapeType.WORDBALLOON);
+        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
+        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
+        shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
+        
+        shapesTool.paintShapeOnIC(layerList.get(0), new UserDrag(0, 0, 200, 200));
 	}
 }

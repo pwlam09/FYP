@@ -24,6 +24,7 @@ import pixelitor.tools.shapes.Heart;
 import pixelitor.tools.shapes.Kiwi;
 import pixelitor.tools.shapes.Rabbit;
 import pixelitor.tools.shapes.RandomStar;
+import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.utils.Utils;
 
 import java.awt.Shape;
@@ -248,6 +249,26 @@ public enum ShapeType {
 //            updateCoordinates(userDrag);
 //            return new Skull(x, y, width, height);
 //        }
+        
+    }, 
+    /**
+     * @author PuiWa
+     *
+     *	Add Word Balloon (most common one)
+     */
+    WORDBALLOON("Word Balloon", true) {
+
+		@Override
+		public Shape getShape(UserDrag userDrag) {
+			updateCoordinates(userDrag);
+			return new WordBalloon(x, y, width, height);
+		}
+
+		@Override
+		public Shape getShape(double x, double y, int diameter) {
+			return new WordBalloon(x, y, diameter, diameter);
+		}
+    	
     };
 
     /**

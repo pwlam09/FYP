@@ -92,6 +92,7 @@ public class Pixelitor {
             	//MangaGenerator.addNewPanelLayer();
             	//MangaGenerator.setActiveLayer();
             	MangaGenerator.drawMangaPanels();
+            	MangaGenerator.drawWordBalloons();
             } catch (Exception e) {
                 Dialogs.showExceptionDialog(e);
             }
