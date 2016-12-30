@@ -78,11 +78,22 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
+       <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-swing-junit-4.5</artifactId>
             <version>1.2.0</version>
             <scope>test</scope>
         </dependency>
+<!-- Attempt to add dependecy for opencv -->
+<!-- system scope (not preferred because the project depends on system setting) -->
+<!--     	
+		<dependency>
+	    	<groupId>org.javaopencvbook</groupId>
+	    	<artifactId>opencv</artifactId>
+	    	<version>2413</version>
+  	        <systemPath>C:\PP_file\cityuFYP\FYP_git\FYP\repo\opencv-2413.jar</systemPath>
+        	<scope>system</scope>    	     
+    	</dependency>  -->
+    	
     </dependencies>
 </project>
