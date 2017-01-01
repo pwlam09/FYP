@@ -1,6 +1,7 @@
 package manga.page;
 
 import pixelitor.colors.FillType;
+import pixelitor.gui.ImageComponent;
 import pixelitor.gui.ImageComponents;
 import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
@@ -17,8 +18,10 @@ import pixelitor.NewImage;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * This is the main controller of generating manga
  * 
  * @author PuiWa
  *
@@ -36,7 +39,7 @@ public final class MangaGenerator {
 	
 	public static void addNewMangaPage() {
 		String title = "Untitled" + untitledCount;
-		NewImage.addNewImage(FillType.WHITE, 600, 1000, title);
+		compositionList.add(NewImage.addNewImage(FillType.WHITE, 600, 1000, title));
 		untitledCount++;
 	}
 	
@@ -47,8 +50,28 @@ public final class MangaGenerator {
         return newLayer;
 	}
 	
+	/**
+	 * Set active layer
+	 * 
+	 * @param i the index of layer of the current active composition
+	 */
 	public static void setActiveLayer(int i) {
 		layerList.get(i).makeActive(AddToHistory.YES);
+	}
+	
+	/**
+	 * Set active internal frame (i.e. composition)
+	 * 
+	 * @param i the index of composition of the current active ImageComponent(IC)
+	 */
+	public static void setActiveComp(int i) {
+		List<ImageComponent> icList = ImageComponents.getICList();
+		Composition selectedComp = compositionList.get(i);
+        for (ImageComponent ic : icList) {
+        	if (ic.getComp() == selectedComp) {
+        		ImageComponents.setActiveIC(ic, true);
+        	}
+        }
 	}
 	
 	
