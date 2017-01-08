@@ -30,6 +30,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+<!-- A local repository to store the native libs --> <!-- THIS IS THE NEW ENTRY-->
+<!-- 	<repositories>
+        <repository>
+            <id>repo</id>
+            <url>file://${project.basedir}/repo</url>
+        </repository>
+    </repositories> -->
+
     <build>
         <defaultGoal>package</defaultGoal>
         <plugins>
@@ -91,7 +99,14 @@
 		    <artifactId>javacv-platform</artifactId>
 		    <version>1.3</version>
 	  	</dependency>
-<!-- Attempt to add dependecy for opencv -->
+	  	
+	  	<!-- Successful local repository installation of opnecv -->
+<!--         <dependency>
+            <groupId>org.opencv</groupId>
+            <artifactId>opencv</artifactId>
+            <version>3.2.0</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>  -->
 <!-- system scope (not preferred because the project depends on system setting) -->
 <!--     	
 		<dependency>

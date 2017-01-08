@@ -38,6 +38,7 @@ import pixelitor.tools.Tool;
 import pixelitor.utils.AppPreferences;
 import pixelitor.utils.Messages;
 import pixelitor.utils.Utils;
+import video.process.VideoProcessor;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuBarUI;
@@ -87,12 +88,14 @@ public class Pixelitor {
                  * initialize the settings for manga
                  */
             	MangaGenerator.addNewMangaPage();
-            	//MangaGenerator.addNewMangaPage();
+            	MangaGenerator.addNewMangaPage();
             	//MangaGenerator.addNewPanelLayer();
             	//MangaGenerator.addNewPanelLayer();
-            	//MangaGenerator.setActiveLayer();
             	MangaGenerator.drawMangaPanels();
             	MangaGenerator.drawWordBalloons();
+            	MangaGenerator.drawImgsToPanel();
+//            	VideoProcessor.extractSubtitle();
+//            	VideoProcessor.extractFrames();
             } catch (Exception e) {
                 Dialogs.showExceptionDialog(e);
             }

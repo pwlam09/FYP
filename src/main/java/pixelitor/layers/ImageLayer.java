@@ -273,7 +273,13 @@ public class ImageLayer extends ContentLayer {
         previewImage = replaceImageWithSelection(previewImage, newImage);
     }
 
-    private void setImageWithSelection(BufferedImage newImage) {
+    /**
+     * @author PuiWa
+     * Changed scope from private to public
+     * This is for cropping image according to selection
+     * @param newImage the image to be cropped by selection
+     */
+    public void setImageWithSelection(BufferedImage newImage) {
         image = replaceImageWithSelection(image, newImage);
         imageRefChanged();
 

@@ -12,11 +12,16 @@ import pixelitor.tools.UserDrag;
 import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
+import video.process.VideoProcessor;
 import pixelitor.Canvas;
 import pixelitor.Composition;
 import pixelitor.NewImage;
 
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,44 +34,50 @@ import java.util.List;
 
 public final class MangaGenerator {
 	private static int untitledCount = 1;
-	private static ArrayList<ImageLayer> layerList=new ArrayList<>();
-	private static ArrayList<Composition> compositionList=new ArrayList<>();
-	
+	private static ArrayList<MangaPage> pageList=new ArrayList<>();
 	
 	private MangaGenerator() {
 		
 	}
 	
 	public static void addNewMangaPage() {
-		String title = "Untitled" + untitledCount;
-		compositionList.add(NewImage.addNewImage(FillType.WHITE, 600, 1000, title));
-		untitledCount++;
+		MangaPage page = new MangaPage();
+		pageList.add(page);
 	}
 	
-	public static ImageLayer addNewPanelLayer() {
-        Composition comp = ImageComponents.getActiveCompOrNull();
-        ImageLayer newLayer=comp.addNewEmptyLayer(null, false);
-        layerList.add(newLayer);
+	public static ImageLayer addNewMangaPanel() {
+		ImageLayer newLayer = getActivePage().addNewMangaPanel();
         return newLayer;
 	}
 	
+	public static MangaPage getActivePage() {
+		Composition comp = ImageComponents.getActiveCompOrNull();
+		for (MangaPage p: pageList) {
+			if (p.getComp().equals(comp)) {
+				return p;
+			}
+		}
+		return null;
+	}
+	
 	/**
-	 * Set active layer
+	 * Set active MangaPanel layer
 	 * 
 	 * @param i the index of layer of the current active composition
 	 */
 	public static void setActiveLayer(int i) {
-		layerList.get(i).makeActive(AddToHistory.YES);
+		MangaPanel selectedPanel = getActivePage().getPanels().get(i);
+		selectedPanel.getLayer().makeActive(AddToHistory.YES);
 	}
 	
 	/**
-	 * Set active internal frame (i.e. composition)
+	 * Set active internal frame (i.e. MangaPage composition)
 	 * 
-	 * @param i the index of composition of the current active ImageComponent(IC)
+	 * @param i the index of MangaPage composition of the current active ImageComponent(IC)
 	 */
 	public static void setActiveComp(int i) {
 		List<ImageComponent> icList = ImageComponents.getICList();
-		Composition selectedComp = compositionList.get(i);
+		Composition selectedComp = pageList.get(i).getComp();
         for (ImageComponent ic : icList) {
         	if (ic.getComp() == selectedComp) {
         		ImageComponents.setActiveIC(ic, true);
@@ -76,15 +87,18 @@ public final class MangaGenerator {
 	
 	
 	/**
-	 * Draw 6 manga panels on different layers
+	 * Draw 6 manga panels on different MangaPanel layers
 	 */
 	public static void drawMangaPanels() {
+		MangaPage activePage = getActivePage();
+		ArrayList<MangaPanel> panels = activePage.getPanels();
+		
 		// Declare 6 layers for 6 panels 
     	for (int i=0; i<6; i++) {
-    		addNewPanelLayer();
+    		activePage.addNewMangaPanel();
     	}
     	
-    	ImageLayer layer = layerList.get(0);	//Get 1st canvas for size reference
+    	ImageLayer layer = panels.get(0).getLayer();	//Get 1st canvas for size reference
         Canvas canvas = layer.getComp().getCanvas();
         int canvasWidth = canvas.getWidth();
         int canvasHeight = canvas.getHeight();
@@ -105,19 +119,36 @@ public final class MangaGenerator {
             UserDrag rightPanelDrag = new UserDrag(canvasLeftRightMargin*2+mangaPanelWidth, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin, 
             		(canvasLeftRightMargin+mangaPanelWidth)*2, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin+mangaPanelHeight);
             
+            // set bounding rectangle of the panels
+            panels.get(i*2).setBoudningRect(leftPanelDrag.createPossiblyEmptyRect());
+            panels.get(i*2+1).setBoudningRect(rightPanelDrag.createPossiblyEmptyRect());
+            
             // Draw panels on different layers
-            shapesTool.paintShapeOnIC(layerList.get(i*2), leftPanelDrag);
-            shapesTool.paintShapeOnIC(layerList.get(i*2+1), rightPanelDrag);
+            shapesTool.paintShapeOnIC(panels.get(i*2).getLayer(), leftPanelDrag);
+            shapesTool.paintShapeOnIC(panels.get(i*2+1).getLayer(), rightPanelDrag);
         }
 	}
 	
 	public static void drawWordBalloons() {
+		MangaPage activePage = getActivePage();
+		ImageLayer layer = activePage.addNewMangaPanel();
+		
         ShapesTool shapesTool = Tools.SHAPES;
         shapesTool.setShapeType(ShapeType.WORDBALLOON);
         shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
         shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
         shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
         
-        shapesTool.paintShapeOnIC(layerList.get(0), new UserDrag(0, 0, 200, 200));
+        shapesTool.paintShapeOnIC(layer, new UserDrag(0, 0, 200, 200));
+	}
+	
+	public static void drawImgsToPanel() {
+//        Composition comp = ImageComponents.getActiveCompOrNull();
+//        ImageLayer activeLayer = (ImageLayer) comp.getActiveLayer();
+        ImageLayer newLayer = getActivePage().addNewMangaPanel();
+        BufferedImage img = VideoProcessor.extractFrame();
+        getActivePage().getPanels().get(0).fitImageToPanelBound(img);
+//        if (img != null)
+//        	newLayer.setImage(img);
 	}
 }
