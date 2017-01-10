@@ -55,7 +55,7 @@ public class VideoProcessor {
 	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/outfile.mp4";	//for testing
 	private static String FFMPEGPath = "C:/PP_program/ffmpeg/ffmpeg-20160820-15dd56c-win64-static/bin";	//for testing
 	private static ArrayList<Long> timestampList = new ArrayList<>();
-	
+	private static long currTimestamp = 6130000000L; 
 	
 	private VideoProcessor() {
 		
@@ -111,21 +111,26 @@ public class VideoProcessor {
 		
 		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
 		Frame ffmpegFrame = null;
-		int counter = 0;
+//		int counter = 0;
 		try {
 			ffmpegFrameGrabber.start();
-			while (true) {
-//				ffmpegFrameGrabber.setTimestamp(22522083);
+			if (currTimestamp != 0L) {
+				ffmpegFrameGrabber.setTimestamp(currTimestamp);
+				ffmpegFrameGrabber.grabKeyFrame();	// skip current key frame
+			} 
+//			while (true) {
+//				ffmpegFrameGrabber.setTimestamp(3842000000L);
 				/* internal time base = 1000000, stated under org.bytedeco.javacpp.avutil
 				convert timestamp to seconds: divided by internal time base */
 				ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();
+				currTimestamp = ffmpegFrameGrabber.getTimestamp();
 				long l = ffmpegFrameGrabber.getTimestamp();
 				System.out.println(l);
-				counter++;
-				if (counter == 5) {
-					break;
-				}
-			}
+//				counter++;
+//				if (counter == 5) {
+//					break;
+//				}
+//			}
 			img = frameToImgConverter.getBufferedImage(ffmpegFrame);
 			ffmpegFrameGrabber.stop();
 		} catch (Exception e) {

@@ -92,7 +92,7 @@ public class Pixelitor {
             	//MangaGenerator.addNewPanelLayer();
             	//MangaGenerator.addNewPanelLayer();
             	MangaGenerator.drawMangaPanels();
-            	MangaGenerator.drawWordBalloons();
+//            	MangaGenerator.drawWordBalloons();
             	MangaGenerator.drawImgsToPanel();
 //            	VideoProcessor.extractSubtitle();
 //            	VideoProcessor.extractFrames();

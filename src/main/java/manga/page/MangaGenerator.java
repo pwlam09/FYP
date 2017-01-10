@@ -10,6 +10,7 @@ import pixelitor.tools.ShapesAction;
 import pixelitor.tools.Tools;
 import pixelitor.tools.UserDrag;
 import pixelitor.tools.shapes.WordBalloon;
+import pixelitor.tools.shapestool.BasicStrokeJoin;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
 import video.process.VideoProcessor;
@@ -111,6 +112,8 @@ public final class MangaGenerator {
         shapesTool.setShapeType(ShapeType.RECTANGLE);
         shapesTool.setAction(ShapesAction.STROKE);
         shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
+        // set stroke join and width
+        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.MITER, 10);
         
         // Add two panels (left and right) at a time
         for (int i=0; i<3; i++) {
@@ -131,13 +134,16 @@ public final class MangaGenerator {
 	
 	public static void drawWordBalloons() {
 		MangaPage activePage = getActivePage();
-		ImageLayer layer = activePage.addNewMangaPanel();
+		ImageLayer layer = activePage.getPanels().get(0).addWordBalloonLayer();
+		System.out.println(activePage.getPanels().get(0).equals(layer));
 		
         ShapesTool shapesTool = Tools.SHAPES;
         shapesTool.setShapeType(ShapeType.WORDBALLOON);
         shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
         shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
         shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
+        // reset stroke join and width to default
+        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 5);
         
         shapesTool.paintShapeOnIC(layer, new UserDrag(0, 0, 200, 200));
 	}
@@ -145,9 +151,14 @@ public final class MangaGenerator {
 	public static void drawImgsToPanel() {
 //        Composition comp = ImageComponents.getActiveCompOrNull();
 //        ImageLayer activeLayer = (ImageLayer) comp.getActiveLayer();
-        ImageLayer newLayer = getActivePage().addNewMangaPanel();
-        BufferedImage img = VideoProcessor.extractFrame();
-        getActivePage().getPanels().get(0).fitImageToPanelBound(img);
+//        ImageLayer newLayer = getActivePage().addNewMangaPanel();
+//        BufferedImage img = VideoProcessor.extractFrame();
+//        getActivePage().getPanels().get(2).fitImageToPanelBound();
+        System.out.println(getActivePage().getPanels().size());
+        for (int i = 0; i<getActivePage().getPanels().size(); i++) {
+        	MangaPanel panel = getActivePage().getPanels().get(i);
+        	panel.fitImageToPanelBound();
+        }
 //        if (img != null)
 //        	newLayer.setImage(img);
 	}

@@ -20,6 +20,7 @@ package pixelitor.tools.shapestool;
 import org.jdesktop.swingx.combobox.EnumComboBoxModel;
 import org.jdesktop.swingx.painter.effects.AreaEffect;
 import pixelitor.Composition;
+import pixelitor.filters.gui.RangeParam;
 import pixelitor.filters.gui.StrokeParam;
 import pixelitor.filters.painters.AreaEffects;
 import pixelitor.filters.painters.EffectsPanel;
@@ -445,6 +446,17 @@ public class ShapesTool extends Tool {
      */
     public void setFill(TwoPointBasedPaint twoPointBasedPaint) {
     	fillModel.setSelectedItem(twoPointBasedPaint);
+    }
+    
+    /**
+     * @author PuiWa
+     * For setting stroke join and width
+     * @param strokeJoin
+     * @param strokeWidth
+     */
+    public void setStrokeJoinAndWidth(BasicStrokeJoin strokeJoin, int strokeWidth) {
+    	strokeParam.setStrokeJoinParam(strokeJoin);
+    	strokeParam.setStrokeWidth(strokeWidth);
     }
     
     @Override

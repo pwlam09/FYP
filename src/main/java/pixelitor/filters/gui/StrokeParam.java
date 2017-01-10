@@ -213,4 +213,22 @@ public class StrokeParam extends AbstractFilterParam {
 
         node.add(strokeNode);
     }
+    
+    /**
+     * Added for setting stroke corner join.
+     * @param strokeJoin Any of BasicStrokeJoin.BEVEL, BasicStrokeJoin.MITER and BasicStrokeJoin.ROUND. Default is round.
+     * @author PuiWa
+     */
+    public void setStrokeJoinParam(BasicStrokeJoin strokeJoin) {
+		strokeJoinParam.setSelectedItem(strokeJoin);
+	}
+    
+    /**
+     * Added for setting stroke width.
+     * @param strokeWidth New stroke width. Default is 5. (Valid range: 1 - 100)
+     * @author PuiWa
+     */
+    public void setStrokeWidth(int strokeWidth) {
+    	strokeWidthParam.setValue(strokeWidth);
+    }
 }
