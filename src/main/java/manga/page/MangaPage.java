@@ -33,9 +33,8 @@ public class MangaPage {
 	
 	public MangaPage() {
 		this.panels = new ArrayList<>();
-		String title = "Page " + pageNum;
+		this.comp = NewImage.addNewImage(FillType.WHITE, 600, 1000, "Page " + pageNum);
 		pageNum++;
-		this.comp = NewImage.addNewImage(FillType.WHITE, 2480, 3508, title);
 	}
 	
 	public Composition getComp() {
@@ -43,9 +42,9 @@ public class MangaPage {
 	}
 	
 	public ImageLayer addNewMangaPanel() {
-		ImageLayer newLayer = this.comp.addNewEmptyLayer(null, false);
-		panels.add(new MangaPanel(comp, newLayer));
-        return newLayer;
+		MangaPanel newPanel = new MangaPanel(comp);
+		panels.add(newPanel);
+        return newPanel.getLayer();
 	}
 	
 	public ArrayList<MangaPanel> getPanels() {

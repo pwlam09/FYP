@@ -12,6 +12,7 @@ import javax.sound.midi.SysexMessage;
 import org.assertj.swing.junit.ant.ImageHandler;
 import org.bytedeco.javacpp.opencv_dnn.Layer;
 
+import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 
 /**
@@ -23,22 +24,30 @@ public class MangaPanelImage {
 	private BufferedImage subImage;
 	private ImageLayer layer;	// the layer the image belong to
 	
-	private static int imgLayerCount = 1;
+	private static int imgCount = 1;
+
 	
 	public MangaPanelImage() {
-		
+		// TODO Auto-generated constructor stub
 	}
 	
-	/**
-	 * @param image image converted from frame
-	 */
-	public MangaPanelImage(BufferedImage image, Rectangle2D bound) {
+	public MangaPanelImage(Composition comp, BufferedImage image, Rectangle2D panelBound) {
 		this.originalImage = image;
-		this.subImage = scaleAndCropSubImage(image, bound);
-		imgLayerCount++;
-		this.layer = MangaGenerator.getActivePage().getComp().addNewEmptyLayer("Image "+imgLayerCount, false);
+		this.subImage = scaleAndCropSubImage(image, panelBound);
+		this.layer = comp.addNewEmptyLayer("Image "+imgCount, false);
+		imgCount++;
 	}
-	
+	//	
+//	/**
+//	 * @param image image converted from frame
+//	 */
+//	public MangaPanelImage(BufferedImage image, Rectangle2D bound) {
+//		this.originalImage = image;
+//		this.subImage = scaleAndCropSubImage(image, bound);
+//		imgLayerCount++;
+//		this.layer = MangaGenerator.getActivePage().getComp().addNewEmptyLayer("Image "+imgLayerCount, false);
+//	}
+//	
 	/**
 	 * To be changed
 	 * @return

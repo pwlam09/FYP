@@ -34,7 +34,6 @@ import java.util.List;
  */
 
 public final class MangaGenerator {
-	private static int untitledCount = 1;
 	private static ArrayList<MangaPage> pageList=new ArrayList<>();
 	
 	private MangaGenerator() {
@@ -44,11 +43,6 @@ public final class MangaGenerator {
 	public static void addNewMangaPage() {
 		MangaPage page = new MangaPage();
 		pageList.add(page);
-	}
-	
-	public static ImageLayer addNewMangaPanel() {
-		ImageLayer newLayer = getActivePage().addNewMangaPanel();
-        return newLayer;
 	}
 	
 	public static MangaPage getActivePage() {
@@ -92,12 +86,13 @@ public final class MangaGenerator {
 	 */
 	public static void drawMangaPanels() {
 		MangaPage activePage = getActivePage();
-		ArrayList<MangaPanel> panels = activePage.getPanels();
 		
 		// Declare 6 layers for 6 panels 
     	for (int i=0; i<6; i++) {
     		activePage.addNewMangaPanel();
     	}
+
+		ArrayList<MangaPanel> panels = activePage.getPanels();
     	
     	ImageLayer layer = panels.get(0).getLayer();	//Get 1st canvas for size reference
         Canvas canvas = layer.getComp().getCanvas();
@@ -132,10 +127,15 @@ public final class MangaGenerator {
         }
 	}
 	
+	/**
+	 * Draw word balloon on layer, similar to drawing panel.
+	 */
 	public static void drawWordBalloons() {
 		MangaPage activePage = getActivePage();
-		ImageLayer layer = activePage.getPanels().get(0).addWordBalloonLayer();
-		System.out.println(activePage.getPanels().get(0).equals(layer));
+		ImageLayer layer = activePage.getPanels().get(0).addMangaBalloonLayer();
+		ImageLayer layer2 = activePage.getPanels().get(1).addMangaBalloonLayer();
+		
+//		System.out.println(activePage.getPanels().get(0).equals(layer));
 		
         ShapesTool shapesTool = Tools.SHAPES;
         shapesTool.setShapeType(ShapeType.WORDBALLOON);
@@ -146,20 +146,44 @@ public final class MangaGenerator {
         shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 5);
         
         shapesTool.paintShapeOnIC(layer, new UserDrag(0, 0, 200, 200));
+        shapesTool.paintShapeOnIC(layer2, new UserDrag(0, 0, 200, 200));
 	}
 	
+	/**
+	 * Fill panels with key frames
+	 */
 	public static void drawImgsToPanel() {
-//        Composition comp = ImageComponents.getActiveCompOrNull();
-//        ImageLayer activeLayer = (ImageLayer) comp.getActiveLayer();
-//        ImageLayer newLayer = getActivePage().addNewMangaPanel();
-//        BufferedImage img = VideoProcessor.extractFrame();
-//        getActivePage().getPanels().get(2).fitImageToPanelBound();
-        System.out.println(getActivePage().getPanels().size());
-        for (int i = 0; i<getActivePage().getPanels().size(); i++) {
-        	MangaPanel panel = getActivePage().getPanels().get(i);
-        	panel.fitImageToPanelBound();
+        for (int i = 0; i<pageList.size(); i++) {
+        	MangaPage currentPage = pageList.get(i);
+    		for (int j = 0; j<currentPage.getPanels().size(); j++) {
+            	MangaPanel panel = currentPage.getPanels().get(j);
+            	panel.fitImageToPanelBound();
+            }
         }
-//        if (img != null)
-//        	newLayer.setImage(img);
+	}
+	
+	public static void setTextToBalloon() {
+//        for (int i = 0; i<getActivePage().getPanels().size(); i++) {
+//        	MangaPanel panel = getActivePage().getPanels().get(i);
+//        	panel.addWordBalloonLayer();
+//        }
+	}
+	
+	/**
+	 * Push balloon and text layers to the top.
+	 * Otherwise they will be occluded by other layers
+	 */
+	public static void pushBalloonsAndTextToTop() {
+		MangaPage activePage = getActivePage();
+		int activeLayerIndex = activePage.getComp().getActiveLayerIndex();
+				
+		for (MangaPage page: pageList) {
+			for (MangaPanel panel: page.getPanels()) {
+				for (MangaBalloon balloon: panel.getBalloons()) {
+					balloon.getLayer().dragFinished(activeLayerIndex);
+					balloon.getMangaText().dragFinished(activeLayerIndex);
+				}
+			}
+		}
 	}
 }
