@@ -38,6 +38,7 @@ import pixelitor.tools.Tool;
 import pixelitor.utils.AppPreferences;
 import pixelitor.utils.Messages;
 import pixelitor.utils.Utils;
+import subtitle.process.SubtitleProcessor;
 import video.process.VideoProcessor;
 
 import javax.swing.*;
@@ -88,12 +89,16 @@ public class Pixelitor {
                  * initialize the settings for manga
                  */
             	MangaGenerator.addNewMangaPage();
-            	MangaGenerator.addNewMangaPage();
             	//MangaGenerator.addNewPanelLayer();
             	//MangaGenerator.addNewPanelLayer();
             	MangaGenerator.drawMangaPanels();
-//            	MangaGenerator.drawWordBalloons();
+            	SubtitleProcessor.parseSRT();
+//            	SubtitleProcessor.printSubText();
+//            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
+            	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
             	MangaGenerator.drawImgsToPanel();
+            	MangaGenerator.drawWordBalloons();
+            	MangaGenerator.pushBalloonsAndTextToTop();
 //            	VideoProcessor.extractSubtitle();
 //            	VideoProcessor.extractFrames();
             } catch (Exception e) {

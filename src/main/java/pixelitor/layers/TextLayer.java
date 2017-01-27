@@ -61,6 +61,15 @@ public class TextLayer extends ContentLayer {
         painter = new TranslatedTextPainter();
     }
 
+    /**
+     * @author PuiWa
+     * Constructor for setting painter
+     */
+    public TextLayer(Composition comp, String name, TranslatedTextPainter painter) {
+    	super(comp, name, null);
+    	this.painter = painter;
+    }
+    
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         isAdjustment = settings.isWatermark();
@@ -278,4 +287,11 @@ public class TextLayer extends ContentLayer {
                 + ", super=" + super.toString() + '}';
     }
 
+    /**
+     * For testing?
+     * @return painter of text layer
+     */
+    public TranslatedTextPainter getTranslatedTextPainter() {
+    	return painter;
+    }
 }

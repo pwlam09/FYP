@@ -14,6 +14,8 @@ import org.bytedeco.javacpp.opencv_dnn.Layer;
 
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
+import subtitle.process.SubtitleProcessor;
+import video.process.VideoProcessor;
 
 /**
  * @author PuiWa
@@ -21,21 +23,24 @@ import pixelitor.layers.ImageLayer;
  */
 public class MangaPanelImage {
 	private BufferedImage originalImage;
+	private long frameTimestamp;	// timestamp of the extracted frame
 	private BufferedImage subImage;
 	private ImageLayer layer;	// the layer the image belong to
 	
-	private static int imgCount = 1;
+	private static int imgCount = 0;
 
 	
 	public MangaPanelImage() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public MangaPanelImage(Composition comp, BufferedImage image, Rectangle2D panelBound) {
+	public MangaPanelImage(Composition comp, BufferedImage image, long framTimestamp, Rectangle2D panelBound) {
 		this.originalImage = image;
+		this.frameTimestamp = framTimestamp;
+//		System.out.println(frameTimestamp);
 		this.subImage = scaleAndCropSubImage(image, panelBound);
-		this.layer = comp.addNewEmptyLayer("Image "+imgCount, false);
 		imgCount++;
+		this.layer = comp.addNewEmptyLayer("Image "+imgCount, false);
 	}
 	//	
 //	/**
@@ -127,5 +132,9 @@ public class MangaPanelImage {
 	 */
 	public void setSubImage(BufferedImage extractFrame) {
 		this.subImage = extractFrame;
+	}
+	
+	public long getFrameTimestamp() {
+		return frameTimestamp;
 	}
 }

@@ -6,9 +6,11 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ProcessBuilder.Redirect;
@@ -24,9 +26,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
+import org.assertj.core.api.BooleanArrayAssert;
 import org.bytedeco.javacpp.opencv_core;
 import org.bytedeco.javacpp.opencv_core.Mat;
+import org.bytedeco.javacpp.opencv_shape.ThinPlateSplineShapeTransformer;
 import org.bytedeco.javacpp.RealSense.frame;
+import org.bytedeco.javacpp.RealSense.rs_context;
 //import org.bytedeco.javacpp.opencv_core.Mat;
 //import org.bytedeco.javacpp.opencv_videoio.VideoCapture;
 import org.bytedeco.javacv.CanvasFrame;
@@ -44,6 +49,7 @@ import org.bytedeco.javacpp.opencv_videoio.VideoCapture;
 
 import manga.page.MangaGenerator;
 import pixelitor.layers.ImageLayer;
+import subtitle.process.SubtitleProcessor;
 
 /**
  * For subtitle and frame extraction using FFmpeg 
@@ -54,8 +60,13 @@ import pixelitor.layers.ImageLayer;
 public class VideoProcessor {
 	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/outfile.mp4";	//for testing
 	private static String FFMPEGPath = "C:/PP_program/ffmpeg/ffmpeg-20160820-15dd56c-win64-static/bin";	//for testing
-	private static ArrayList<Long> timestampList = new ArrayList<>();
-	private static long currTimestamp = 6130000000L; 
+	
+	/* internal time base = 1000000, stated under org.bytedeco.javacpp.avutil
+	convert timestamp to seconds: divided by internal time base */
+//	private static long currTimestamp = 6137000000L; 
+	private static long currTimestamp = 6387223000L; 
+	private static long endTimestamp = 6510000000L;
+	private static boolean startedExtract;
 	
 	private VideoProcessor() {
 		
@@ -99,7 +110,12 @@ public class VideoProcessor {
 	
 	/**
 	 * Extract keyframe through JavaCV wrapper of FFmpeg,
-	 * The extracted keyframe is converted into BufferedImage to be drawn in a layer
+	 * The extracted keyframe is converted into BufferedImage to be drawn in a layer.
+	 * <p>
+	 * P.S. Setting and getting timestamp may not be accurate. 
+	 * Retrieved frame varies, especially starting and ending frame, depending on
+	 * starting and ending timestamp.
+	 * Other frames remains unchanged.
 	 * 
 	 * @return BufferedImage of an extracted frame
 	 */
@@ -111,27 +127,25 @@ public class VideoProcessor {
 		
 		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
 		Frame ffmpegFrame = null;
-//		int counter = 0;
 		try {
 			ffmpegFrameGrabber.start();
-			if (currTimestamp != 0L) {
+//			if (currTimestamp != 0L) {
 				ffmpegFrameGrabber.setTimestamp(currTimestamp);
-				ffmpegFrameGrabber.grabKeyFrame();	// skip current key frame
-			} 
-//			while (true) {
-//				ffmpegFrameGrabber.setTimestamp(3842000000L);
-				/* internal time base = 1000000, stated under org.bytedeco.javacpp.avutil
-				convert timestamp to seconds: divided by internal time base */
-				ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();
-				currTimestamp = ffmpegFrameGrabber.getTimestamp();
-				long l = ffmpegFrameGrabber.getTimestamp();
-				System.out.println(l);
-//				counter++;
-//				if (counter == 5) {
-//					break;
-//				}
 //			}
-			img = frameToImgConverter.getBufferedImage(ffmpegFrame);
+			if (!startedExtract) {
+				startedExtract = true;
+			} else {
+				ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();	// skip current keyframe
+			}
+			ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();
+			if (ffmpegFrame != null && ffmpegFrameGrabber.getTimestamp() <= endTimestamp) {
+				img = frameToImgConverter.getBufferedImage(ffmpegFrame);
+			}
+//			ffmpegFrameGrabber.setTimestamp(3842000000L);
+			// set timestamp for next keyframe
+//			ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();	
+			currTimestamp = ffmpegFrameGrabber.getTimestamp();
+			
 			ffmpegFrameGrabber.stop();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -153,5 +167,76 @@ public class VideoProcessor {
 //			e.printStackTrace();
 //		}
 		return img;
+	}
+	
+	public static void resetCurrTimestamp(long currTimestamp) {
+		VideoProcessor.currTimestamp = currTimestamp;
+	}
+
+	public static int getKeyFrameCount() {
+		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
+		int keyframeCount = 0;
+		long backupTimestamp = currTimestamp;
+		try {
+			ffmpegFrameGrabber.start();
+//			if (currTimestamp != 0L) {
+				ffmpegFrameGrabber.setTimestamp(currTimestamp);
+//			} 
+//			Frame extractedFrame = ffmpegFrameGrabber.grabKeyFrame();
+			Frame extractedFrame = null;
+			while ((extractedFrame = ffmpegFrameGrabber.grabKeyFrame()) != null && 
+					ffmpegFrameGrabber.getTimestamp() <= endTimestamp) {
+				keyframeCount++;
+//					System.out.printf("frameCount: %d, timestamp: %s\n", frameCount, currTimestamp+"");
+			}
+//			System.out.printf("last frameCount: %d, last timestamp: %s\n", frameCount, currTimestamp+"");
+			ffmpegFrameGrabber.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return keyframeCount;
+	}
+	
+	public static long getCurrTimestamp() {
+		return currTimestamp;
+	}
+	
+	public static long getNextKeyframeTimestamp(long timestamp) {
+		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
+		long nextTimestamp = 0L;
+		try {
+			ffmpegFrameGrabber.start();
+			ffmpegFrameGrabber.setTimestamp(timestamp);
+			ffmpegFrameGrabber.grabKeyFrame();
+			ffmpegFrameGrabber.grabKeyFrame();	// jump to next keyframe
+			nextTimestamp = ffmpegFrameGrabber.getTimestamp();
+			ffmpegFrameGrabber.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return nextTimestamp;
+	}
+	
+	/**
+	 * For testing
+	 * Frame to subtitle time mismatch?
+	 */
+	public static void printFrameSubtitleTimeMatch(long sTimestamp, long eTimestamp) {
+		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
+		long frameTimestamp = 0L;
+		try {
+			ffmpegFrameGrabber.start();
+			ffmpegFrameGrabber.setTimestamp(sTimestamp);
+			ffmpegFrameGrabber.grabFrame();
+			frameTimestamp = ffmpegFrameGrabber.getTimestamp();
+//			System.out.printf("Frame Match Time: %s", SubtitleProcessor.timestampToTimeString(frameTimestamp));
+			ffmpegFrameGrabber.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static long getEndTimestamp() {
+		return endTimestamp;
 	}
 }

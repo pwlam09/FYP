@@ -238,7 +238,8 @@ public abstract class AbstractAreaPainter<T> extends AbstractLayoutPainter<T> {
      * painter subclasses. In the future it may be made public for use by other classes.
      * If this happens it should probably be turned into a static utility method.
      */
-    Paint calculateSnappedPaint(Paint p, int width, int height) {
+    protected Paint calculateSnappedPaint(Paint p, int width, int height) {
+    	// scope changed from undefined to protected
         return PaintUtils.resizeGradient(p, width, height);
     }
 

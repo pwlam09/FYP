@@ -11,6 +11,7 @@ import pixelitor.NewImage;
 import pixelitor.colors.FillType;
 import pixelitor.gui.ImageComponent;
 import pixelitor.gui.ImageComponents;
+import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
 import pixelitor.layers.Layer;
 
@@ -42,12 +43,24 @@ public class MangaPage {
 	}
 	
 	public ImageLayer addNewMangaPanel() {
-		MangaPanel newPanel = new MangaPanel(comp);
+		MangaPanel newPanel = new MangaPanel(this);
 		panels.add(newPanel);
         return newPanel.getLayer();
 	}
 	
 	public ArrayList<MangaPanel> getPanels() {
 		return this.panels;
+	}
+	
+	
+	/**
+	 * Set active MangaPanel layer
+	 * 
+	 * @param i the index of layer of the composition
+	 */
+	public ImageLayer setActivePanelLayer(int i) {
+		MangaPanel selectedPanel = panels.get(i);
+		selectedPanel.getLayer().makeActive(AddToHistory.YES);
+		return selectedPanel.getLayer();
 	}
 }
