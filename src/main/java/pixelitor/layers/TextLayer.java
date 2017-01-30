@@ -291,7 +291,7 @@ public class TextLayer extends ContentLayer {
      * For testing?
      * @return painter of text layer
      */
-    public TranslatedTextPainter getTranslatedTextPainter() {
+    protected TranslatedTextPainter getTranslatedTextPainter() {
     	return painter;
     }
 }

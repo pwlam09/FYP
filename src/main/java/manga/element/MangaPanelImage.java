@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
@@ -12,17 +12,16 @@ import javax.sound.midi.SysexMessage;
 import org.assertj.swing.junit.ant.ImageHandler;
 import org.bytedeco.javacpp.opencv_dnn.Layer;
 
+import manga.process.subtitle.SubtitleProcessor;
+import manga.process.video.VideoProcessor;
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
-import subtitle.process.SubtitleProcessor;
-import video.process.VideoProcessor;
 
 /**
  * @author PuiWa
  *
  */
 public class MangaPanelImage {
-	private BufferedImage originalImage;
 	private long frameTimestamp;	// timestamp of the extracted frame
 	private BufferedImage subImage;
 	private ImageLayer layer;	// the layer the image belong to
@@ -35,9 +34,7 @@ public class MangaPanelImage {
 	}
 	
 	public MangaPanelImage(Composition comp, BufferedImage image, long framTimestamp, Rectangle2D panelBound) {
-		this.originalImage = image;
 		this.frameTimestamp = framTimestamp;
-//		System.out.println(frameTimestamp);
 		this.subImage = scaleAndCropSubImage(image, panelBound);
 		imgCount++;
 		this.layer = comp.addNewEmptyLayer("Image "+imgCount, false);

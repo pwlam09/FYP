@@ -1,10 +1,12 @@
-package video.process;
+package manga.process.video;
 
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -47,9 +49,9 @@ import org.bytedeco.javacv.OpenCVFrameConverter;
 import org.bytedeco.javacv.OpenCVFrameGrabber;
 import org.bytedeco.javacpp.opencv_videoio.VideoCapture;
 
-import manga.page.MangaGenerator;
+import manga.element.MangaGenerator;
+import manga.process.subtitle.SubtitleProcessor;
 import pixelitor.layers.ImageLayer;
-import subtitle.process.SubtitleProcessor;
 
 /**
  * For subtitle and frame extraction using FFmpeg 
@@ -64,7 +66,8 @@ public class VideoProcessor {
 	/* internal time base = 1000000, stated under org.bytedeco.javacpp.avutil
 	convert timestamp to seconds: divided by internal time base */
 //	private static long currTimestamp = 6137000000L; 
-	private static long currTimestamp = 6387223000L; 
+//	private static long currTimestamp = 6387223000L; 
+	private static long currTimestamp = 6387000000L; 
 	private static long endTimestamp = 6510000000L;
 	private static boolean startedExtract;
 	
@@ -109,20 +112,22 @@ public class VideoProcessor {
 	}
 	
 	/**
-	 * Extract keyframe through JavaCV wrapper of FFmpeg,
-	 * The extracted keyframe is converted into BufferedImage to be drawn in a layer.
+	 * Extract key frame through JavaCV wrapper of FFmpeg,
+	 * The extracted key frame is converted into BufferedImage to be drawn on a layer.
 	 * <p>
 	 * P.S. Setting and getting timestamp may not be accurate. 
 	 * Retrieved frame varies, especially starting and ending frame, depending on
-	 * starting and ending timestamp.
-	 * Other frames remains unchanged.
+	 * starting and ending timestamp. Once a timestamp is set, the first frame seems to be
+	 * treated as key frame.
 	 * 
 	 * @return BufferedImage of an extracted frame
 	 */
 	public static BufferedImage extractFrame() {
 		BufferedImage img = null;
 		//***************** JavaCV runtime error due to frame to image conversion ********************
-		// solution found: the frame can only be accessed after grabber.start(), convert frame to image before grabber.stop()
+		// solution found: 
+		// the frame can only be accessed after grabber.start(), convert frame to image before grabber.stop()
+		// the frame only lives when frame grabber is alive
 		Java2DFrameConverter frameToImgConverter = new Java2DFrameConverter();
 		
 		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
@@ -150,7 +155,7 @@ public class VideoProcessor {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-//		******************** Attempt of opencv, unknown runtime error, cannot open open video ***********************
+//		******************** Attempt of opencv, unknown runtime error, cannot open video ***********************
 //		OpenCVFrameGrabber opencvFrameGrabber = new OpenCVFrameGrabber(TESTVIDEOPATH);
 //		OpenCVFrameConverter.ToMat opencvConverter = new OpenCVFrameConverter.ToMat();
 //		Frame opencvFrame = null;
@@ -167,6 +172,42 @@ public class VideoProcessor {
 //			e.printStackTrace();
 //		}
 		return img;
+	}
+	
+	public static ArrayList<FrameImage> extractKeyFrames() {
+		ArrayList<FrameImage> allFrameImgs = new ArrayList<>();
+		//***************** JavaCV runtime error due to frame to image conversion ********************
+		// solution found: 
+		// the frame can only be accessed after grabber.start(), convert frame to image before grabber.stop()
+		// the frame only lives when frame grabber is alive
+		Java2DFrameConverter frameToImgConverter = new Java2DFrameConverter();
+		
+		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
+		Frame ffmpegFrame = null;
+		try {
+			ffmpegFrameGrabber.start();
+			ffmpegFrameGrabber.setTimestamp(currTimestamp);
+			while (ffmpegFrameGrabber.getTimestamp() <= endTimestamp) {
+				BufferedImage img = null;
+				ffmpegFrame = ffmpegFrameGrabber.grabKeyFrame();
+				long frameTimestamp = ffmpegFrameGrabber.getTimestamp();
+				if (ffmpegFrame != null && frameTimestamp <= endTimestamp) {
+					img = frameToImgConverter.getBufferedImage(ffmpegFrame);
+					allFrameImgs.add(new FrameImage(deepCopy(img), frameTimestamp));
+				}
+			}
+			ffmpegFrameGrabber.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return allFrameImgs;
+	}
+	
+	private static BufferedImage deepCopy(BufferedImage bi) {
+		ColorModel cm = bi.getColorModel();
+		boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+		WritableRaster raster = bi.copyData(null);
+		return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
 	}
 	
 	public static void resetCurrTimestamp(long currTimestamp) {
@@ -201,6 +242,12 @@ public class VideoProcessor {
 		return currTimestamp;
 	}
 	
+	/**
+	 * Return timestamp of next key frame based on the timestamp provided.
+	 * Return timestamp of last frame if it is the end of video. 
+	 * @param timestamp timestamp of current key frame
+	 * @return timestamp of next key frame
+	 */
 	public static long getNextKeyframeTimestamp(long timestamp) {
 		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
 		long nextTimestamp = 0L;
@@ -238,5 +285,23 @@ public class VideoProcessor {
 	
 	public static long getEndTimestamp() {
 		return endTimestamp;
+	}
+	
+	/**
+	 * For testing
+	 */
+	public static void printVideoEndTimestamp() {
+		FFmpegFrameGrabber ffmpegFrameGrabber = new FFmpegFrameGrabber(TESTVIDEOPATH);
+		try {
+			ffmpegFrameGrabber.start();
+			ffmpegFrameGrabber.setTimestamp(6900000000L);
+			ffmpegFrameGrabber.grabKeyFrame();
+			ffmpegFrameGrabber.grabKeyFrame();
+			long frameTimestamp = ffmpegFrameGrabber.getTimestamp();
+			System.out.printf("VideoEndTimestamp: %s\n", frameTimestamp+"");
+			ffmpegFrameGrabber.stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

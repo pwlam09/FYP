@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import java.awt.GradientPaint;
 import java.awt.image.BufferedImage;

@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import java.awt.Canvas;
 import java.awt.Font;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import org.hamcrest.core.Is;
 
+import manga.process.subtitle.SubtitleProcessor;
 import pixelitor.Composition;
 import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
@@ -16,7 +17,6 @@ import pixelitor.layers.Layer;
 import pixelitor.layers.MangaText;
 import pixelitor.tools.ShapeType;
 import pixelitor.tools.shapes.WordBalloon;
-import subtitle.process.SubtitleProcessor;
 
 /**
  * @author PuiWa

@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import pixelitor.tools.shapes.WordBalloon;
 

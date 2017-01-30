@@ -1,5 +1,9 @@
-package subtitle.process;
+package manga.process.subtitle;
 
+/**
+ * @author PuiWa
+ *
+ */
 public class SubtitleTimeInfo {
 	private long sTime;
 	private long eTime;

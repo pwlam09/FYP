@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import java.awt.Panel;
 import java.awt.Rectangle;
@@ -7,6 +7,9 @@ import java.awt.image.BufferedImage;
 import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 
+import manga.process.subtitle.SubtitleProcessor;
+import manga.process.video.FrameImage;
+import manga.process.video.VideoProcessor;
 import pixelitor.Composition;
 import pixelitor.filters.painters.TextSettings;
 import pixelitor.filters.painters.TranslatedMangaTextPainter;
@@ -23,8 +26,6 @@ import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.BasicStrokeJoin;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
-import subtitle.process.SubtitleProcessor;
-import video.process.VideoProcessor;
 
 /**
  * @author PuiWa
@@ -82,19 +83,19 @@ public class MangaPanel {
 	
     /**
      * Image fit to panel bounding rectangle, starts from top-left corner.
-     * The image will be put into a new layer, bounded by the area within selection.
+     * The image will be drawn onto a new layer, bounded by the area within selection.
      */
-    public void fitImageToPanelBound() {
-    	long frameTimestamp = VideoProcessor.getCurrTimestamp();
-        BufferedImage frameImg = VideoProcessor.extractFrame();
+    public void fitImageToPanelBound(FrameImage frameImage) {
+//    	long frameTimestamp = VideoProcessor.getCurrTimestamp();
+//        BufferedImage frameImg = VideoProcessor.extractFrame();
         
-        if (frameImg != null) {
+        if (frameImage != null) {
         	// setup selection with the bounding rectangle of MangaPanel
         	Composition comp = page.getComp();
             Selection selection = new Selection(bound, comp.getIC());
             comp.setNewSelection(selection);
             
-	        panelImg = new MangaPanelImage(comp, frameImg, frameTimestamp, bound);
+	        panelImg = new MangaPanelImage(comp, frameImage.getImg(), frameImage.getTimestamp(), bound);
 	        
 	        // image to new layer
 	        ImageLayer layer = panelImg.getLayer();
@@ -121,9 +122,14 @@ public class MangaPanel {
 	//		System.out.println("subTextList.size(): "+subTextList.size());
 	    	
 	    	Composition comp = page.getComp();
-	    	MangaText mangaTextLayer = new MangaText(comp, "Manga Text");
+
+//	    	WordBalloon balloonRef = new WordBalloon(bound.getX(), bound.getY(), -100, -100);
+	    	UserDrag balloonDrag = new UserDrag(bound.getX()+100, bound.getY()+100, bound.getX(), bound.getY());
+	    	WordBalloon balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
+	    	
+	    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
 	    	mangaTextLayer.setDefaultSetting();
-	//    	mangaTextLayer.printMangaText();
+//	    	mangaTextLayer.printMangaText();
 
 	    	
 	    	// any change to textSettings need to use setSettings(), otherwise it will not be applied
@@ -137,16 +143,12 @@ public class MangaPanel {
 	        mangaTextLayer.setSettings(newSettings);
 	    	
 	        // set text translation within balloon bound, to be changed
-	    	mangaTextLayer.setTranslation((int)bound.getX(), (int)bound.getY());
+	    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
 	    	
-	    	WordBalloon balloonRef = new WordBalloon(bound.getX(), bound.getY(), 100, 100);
 	    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);
 	    	balloonList.add(balloon);
 	    	
-	    	TranslatedMangaTextPainter painter = (TranslatedMangaTextPainter) mangaTextLayer.getTranslatedTextPainter();
-	    	painter.setBound(balloonRef.getBounds());
-	    	
-			//initialize shapes tool for drawing balloon
+			// initialize shapes tool for drawing balloon
 	        ShapesTool shapesTool = Tools.SHAPES;
 	        shapesTool.setShapeType(ShapeType.WORDBALLOON);
 	        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
@@ -155,8 +157,10 @@ public class MangaPanel {
 	        // reset stroke join and width to default
 	        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 5);
 	        
-	        // paint balloon relative to panel bound, to be changed
-	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), new UserDrag(bound.getX(), bound.getY(), bound.getX()+200, bound.getY()+200));
+	        // paint balloon
+//	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), new UserDrag(bound.getX(), bound.getY(), bound.getX()+100, bound.getY()+100));
+	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), balloonDrag);
+//	    	System.out.println("Userdrag: "+new UserDrag(bound.getX()+100, bound.getY()+100, bound.getX(), bound.getY()));
         }
     }
 
@@ -166,5 +170,10 @@ public class MangaPanel {
 	
 	public MangaPage getPage() {
 		return page;
+	}
+	
+	private static UserDrag createUserDragFromShape(WordBalloon balloonRef) {
+		Rectangle2D bound = balloonRef.getBounds2D();
+	    return new UserDrag(bound.getX(), bound.getY(), bound.getX()+bound.getWidth(), bound.getY()+bound.getHeight());
 	}
 }

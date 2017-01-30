@@ -1,4 +1,4 @@
-package subtitle.process;
+package manga.process.subtitle;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,18 +14,25 @@ import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import video.process.VideoProcessor;
+import org.bytedeco.javacpp.opencv_core.Mat;
 
+import manga.process.video.VideoProcessor;
+
+/**
+ * @author PuiWa
+ * 
+ */
 public class SubtitleProcessor {
 	private static TreeMap<SubtitleTimeInfo, String> subTextMap;
 	private static int subTextCounter = 0;
 	private static SubtitleProcessor instance = new SubtitleProcessor();
 
-	/*	group 1:	subtitle numeric counter
-		group 2-5:	start time
-		group 6-9:	end time
-		group 11:	subtitle text
-	*/
+	/**
+	 * group 1:		subtitle numeric counter, 
+	 * group 2-5:	start time, 
+	 * group 6-9:	end time, 
+	 * group 11:	subtitle text
+	 */
 	private static final String nl = "\\\n";
 	private static final String sp = "[ \\t]*";
 	private static Pattern r = Pattern.compile("(?s)(\\d+)" 
@@ -84,15 +91,16 @@ public class SubtitleProcessor {
 		
 		Matcher m = r.matcher(subtitleStr);
 		while (m.find( )) {
-			// trim subtitle text style e.g. text contains "<....>", text starts with "-"
+			// trim subtitle text style e.g. text contains "<....>"
 			long sTimestamp = convertTimeToTimestamp(m.group(2), m.group(3), m.group(4), m.group(5));
 			long eTimestamp = convertTimeToTimestamp(m.group(6), m.group(7), m.group(8), m.group(9));
 //			System.out.println("sTimestamp: "+sTimestamp);
-			String subText = null;
-			if (m.group(11).contains("<") && m.group(11).contains(">")) {
-				subText = getSubtitleTextWithoutStyle(m.group(11));
-				subTextMap.put(new SubtitleTimeInfo(sTimestamp, eTimestamp), subText);
+			String subText = m.group(11).replaceAll("\\r\\n|\\r|\\n", " ");	// subtitle may contain line break
+			// trim style tags of extracted text if any
+			if (subText.contains("<") && subText.contains(">")) {
+				subText = getSubtitleTextWithoutStyle(subText);
 			}
+			subTextMap.put(new SubtitleTimeInfo(sTimestamp, eTimestamp), subText);
 		}
 	}
 	
@@ -107,11 +115,11 @@ public class SubtitleProcessor {
 	}
 	
 	private static String getSubtitleTextWithoutStyle(String styledText) {
-		String[] splitedText = styledText.split(">");
-		String subText = null;
-		for (String str: splitedText) {
-			if (str.charAt(0) != '<') {
-				subText = str.substring(0, str.indexOf("<"));
+		String subText = "";
+		String[] splitedTextList = styledText.split(">");
+		for (int i = 0; i < splitedTextList.length; i++) {
+			if (splitedTextList[i].charAt(0) != '<') {
+				subText = subText + splitedTextList[i].substring(0, splitedTextList[i].indexOf("<")) + " ";
 			}
 		}
 //		System.out.println("subText: "+subText);
@@ -130,11 +138,17 @@ public class SubtitleProcessor {
 	public static ArrayList<String> getSubTextList(long timestamp1, long timestamp2) {
 		ArrayList<String> subTextList = new ArrayList<>();
 		for (Map.Entry<SubtitleTimeInfo, String> entry : subTextMap.entrySet()) {
-			if (timestamp1 <= entry.getKey().getsTime() && entry.getKey().geteTime() <= timestamp2) {
+			long subtitleStartTime = entry.getKey().getsTime();
+			long subtitleEndTime = entry.getKey().geteTime();
+			boolean isAfterCurrFrame = (timestamp1 <= subtitleStartTime) && (subtitleStartTime < timestamp2) &&
+					(Math.abs(subtitleStartTime-timestamp2) >= Math.abs(subtitleEndTime-timestamp2));
+			boolean isBeforeCurrFrame = (timestamp1 < subtitleEndTime) && (subtitleEndTime <= timestamp2) &&
+					(Math.abs(subtitleEndTime-timestamp1) > Math.abs(subtitleStartTime-timestamp1));
+			if (isAfterCurrFrame || isBeforeCurrFrame) {
 //				System.out.println("time1: "+SubtitleProcessor.timestampToTimeString(timestamp1));
 //				System.out.println("time2: "+SubtitleProcessor.timestampToTimeString(timestamp2));
-//				System.out.printf("%s >= %s: %s\n", timestamp1+"", entry.getKey().getsTime()+"", (timestamp1 >= entry.getKey().getsTime())+"");
-//				System.out.printf("%s <= %s: %s", entry.getKey().geteTime()+"", timestamp2+"", (entry.getKey().geteTime() <= timestamp2)+"");
+//				System.out.printf("%s <= %s: %s\n", timestamp1+"", entry.getKey().getsTime()+"", (timestamp1 <= entry.getKey().getsTime())+"");
+//				System.out.printf("%s <= %s: %s", entry.getKey().getsTime()+"", timestamp2+"", (entry.getKey().getsTime() < timestamp2)+"");
 				subTextList.add(entry.getValue());
 //				System.out.println("Key: " + entry.getKey() + ". Value: " + entry.getValue());
 			}
@@ -152,6 +166,11 @@ public class SubtitleProcessor {
 		}
 	}
 	
+	/**
+	 * For testing
+	 * @param timestamp
+	 * @return
+	 */
 	public static String timestampToTimeString(long timestamp) {
 		String colon = ":";
 		int h = (int) (((timestamp / 1000000) / 60) / 60);

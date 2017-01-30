@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
+import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -20,9 +21,9 @@ import javax.swing.JComponent;
 
 import org.jdesktop.swingx.painter.effects.AreaEffect;
 
-import manga.page.MangaBalloon;
-import manga.page.MangaGenerator;
-import manga.page.MangaPanel;
+import manga.element.MangaBalloon;
+import manga.element.MangaGenerator;
+import manga.element.MangaPanel;
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 import pixelitor.tools.Tools;
@@ -30,6 +31,10 @@ import pixelitor.tools.UserDrag;
 import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.ShapesTool;
 
+/**
+ * @author PuiWa
+ *
+ */
 public class TranslatedMangaTextPainter extends TranslatedTextPainter {
 	/**
 	 * auto generated serial version uid
@@ -77,6 +82,7 @@ public class TranslatedMangaTextPainter extends TranslatedTextPainter {
         int th = metrics.getHeight();
         Rectangle res = calculateLayout(tw, th, width, height);
         
+        // set painter position
         g.translate(res.x, res.y);
 
         if (isPaintStretched()) {
@@ -90,8 +96,8 @@ public class TranslatedMangaTextPainter extends TranslatedTextPainter {
 //        g.drawString(text, 0, 0 + metrics.getAscent());
         
         // create AttributedString
-        System.out.println("doPaint text: "+text);
         attrString = new AttributedString(text);
+//        attrString.addAttribute(TextAttribute.FONT, font);
         
         // Create a new LineBreakMeasurer from the paragraph.
         // It will be cached and re-used.
@@ -104,7 +110,7 @@ public class TranslatedMangaTextPainter extends TranslatedTextPainter {
         }
 
         // Set break width to width of Component.
-        float breakWidth = (float)bound.getWidth();
+        float breakWidth = width;
         float drawPosY = 0;
         // Set position to the index of the first character in the paragraph.
         lineMeasurer.setPosition(paragraphStart);
@@ -140,6 +146,8 @@ public class TranslatedMangaTextPainter extends TranslatedTextPainter {
 				ef.apply(g, shape, width, height);
 			}
 		}
+		
+		// reset painter position
 		g.translate(-res.x, -res.y);
     }
     

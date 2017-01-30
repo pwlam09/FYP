@@ -14,6 +14,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.lang.management.ManagementPermission;
 
 import javax.swing.Painter;
 
@@ -21,7 +22,8 @@ import org.bytedeco.javacpp.opencv_core.Rect;
 import org.jdesktop.swingx.painter.AbstractLayoutPainter;
 import org.jdesktop.swingx.painter.TextPainter;
 
-import manga.page.MangaPanel;
+import manga.element.MangaPage;
+import manga.element.MangaPanel;
 import pixelitor.Composition;
 import pixelitor.filters.comp.Flip;
 import pixelitor.filters.comp.Rotate;
@@ -39,6 +41,7 @@ import pixelitor.history.History;
 import pixelitor.history.NewLayerEdit;
 import pixelitor.history.TextLayerChangeEdit;
 import pixelitor.history.TextLayerRasterizeEdit;
+import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.utils.ImageUtils;
 import pixelitor.utils.UpdateGUI;
 import pixelitor.utils.Utils;
@@ -49,12 +52,26 @@ import pixelitor.utils.test.RandomGUITest;
  *
  */
 public class MangaText extends TextLayer {
-	private MangaPanel panel;
+	private WordBalloon balloonRef;
 	private static int textNum = 0;
 	
-	public MangaText(Composition comp, String name) {
+	public MangaText(Composition comp, WordBalloon balloonRef) {
 		super(comp, "Text "+(++textNum), new TranslatedMangaTextPainter());
+		this.balloonRef = balloonRef;
 	}
+	
+    /**
+     * Override to set the bounding paint area within balloon reference.
+     * @see pixelitor.layers.TextLayer#paintLayerOnGraphics(java.awt.Graphics2D, boolean)
+     */
+    @Override
+    public void paintLayerOnGraphics(Graphics2D g, boolean firstVisibleLayer) {
+    	getTranslatedTextPainter().setFillPaint(getSettings().getColor());
+//    	getTranslatedTextPainter().paint(g, null, comp.getCanvasWidth(), comp.getCanvasHeight());
+    	Rectangle2D bound = balloonRef.getTextBound2D();
+//    	System.out.println(bound);
+    	getTranslatedTextPainter().paint(g, null, (int)bound.getWidth(), (int)bound.getHeight());
+    }
 
 	public String getText() {
 		return getSettings().getText();

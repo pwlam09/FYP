@@ -19,7 +19,9 @@ package pixelitor;
 
 import com.bric.util.JVM;
 
-import manga.page.MangaGenerator;
+import manga.element.MangaGenerator;
+import manga.process.subtitle.SubtitleProcessor;
+import manga.process.video.VideoProcessor;
 import net.jafama.FastMath;
 import pixelitor.colors.FgBgColors;
 import pixelitor.colors.FillType;
@@ -38,8 +40,6 @@ import pixelitor.tools.Tool;
 import pixelitor.utils.AppPreferences;
 import pixelitor.utils.Messages;
 import pixelitor.utils.Utils;
-import subtitle.process.SubtitleProcessor;
-import video.process.VideoProcessor;
 
 import javax.swing.*;
 import javax.swing.plaf.MenuBarUI;
@@ -99,6 +99,7 @@ public class Pixelitor {
             	MangaGenerator.drawImgsToPanel();
             	MangaGenerator.drawWordBalloons();
             	MangaGenerator.pushBalloonsAndTextToTop();
+//            	VideoProcessor.printVideoEndTimestamp();
 //            	VideoProcessor.extractSubtitle();
 //            	VideoProcessor.extractFrames();
             } catch (Exception e) {

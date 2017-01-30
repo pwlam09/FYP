@@ -1,4 +1,4 @@
-package manga.page;
+package manga.element;
 
 import pixelitor.colors.FillType;
 import pixelitor.gui.ImageComponent;
@@ -13,8 +13,6 @@ import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.BasicStrokeJoin;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
-import subtitle.process.SubtitleProcessor;
-import video.process.VideoProcessor;
 import pixelitor.Canvas;
 import pixelitor.Composition;
 import pixelitor.NewImage;
@@ -28,6 +26,10 @@ import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 import java.util.List;
 
+import manga.process.subtitle.SubtitleProcessor;
+import manga.process.video.FrameImage;
+import manga.process.video.VideoProcessor;
+
 /**
  * This is the main controller of generating manga
  * 
@@ -37,20 +39,22 @@ import java.util.List;
 
 public final class MangaGenerator {
 	private static ArrayList<MangaPage> pageList=new ArrayList<>();
+	private static int keyFrameCount = 0;
+	private static int numOfPanelsPerPage = 6;
 	
 	private MangaGenerator() {
 		
 	}
 	
 	public static void addNewMangaPage() {
-		int keyFrameCount = VideoProcessor.getKeyFrameCount();
-		System.out.println("keyframecount: "+keyFrameCount);
-		int pageNum = keyFrameCount / 6;
+		keyFrameCount = VideoProcessor.getKeyFrameCount();
+//		System.out.println("keyframecount: "+keyFrameCount);
+		int pageNum = keyFrameCount / numOfPanelsPerPage;
 		for (int i = 0; i<pageNum; i++) {
 			MangaPage page = new MangaPage();
 			pageList.add(page);
 		}
-		if (keyFrameCount % 6 != 0) {
+		if (keyFrameCount % numOfPanelsPerPage != 0) {
 			MangaPage page = new MangaPage();
 			pageList.add(page);
 		}
@@ -99,12 +103,12 @@ public final class MangaGenerator {
 	 * Draw 6 manga panels on different MangaPanel layers
 	 */
 	public static void drawMangaPanels() {
-//		MangaPage activePage = getActivePage();
-		
 		for (MangaPage page: pageList) {
 
-			// Declare 6 layers for 6 panels 
-	    	for (int i=0; i<6; i++) {
+			// 6 panels at most for a page?
+			// 1 key frame = 1 panel
+	    	for (int i=0; i<numOfPanelsPerPage && keyFrameCount>0; i++) {
+	    		keyFrameCount--;
 	    		page.addNewMangaPanel();
 	    	}
 
@@ -119,6 +123,7 @@ public final class MangaGenerator {
 	        int mangaPanelWidth = (int)((canvas.getWidth()-canvasLeftRightMargin*3)/2);
 	        int mangaPanelHeight = (int)((canvas.getHeight()-canvasTopBottomMargin*4)/3);
 	        
+	        // intialize tools for drawing panels
 	        ShapesTool shapesTool = Tools.SHAPES;
 	        shapesTool.setShapeType(ShapeType.RECTANGLE);
 	        shapesTool.setAction(ShapesAction.STROKE);
@@ -128,18 +133,19 @@ public final class MangaGenerator {
 	        
 	        // Add two panels (left and right) at a time
 	        for (int i=0; i<3; i++) {
-	            UserDrag leftPanelDrag = new UserDrag(canvasLeftRightMargin, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin, 
-	            		canvasLeftRightMargin+mangaPanelWidth, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin+mangaPanelHeight);
-	            UserDrag rightPanelDrag = new UserDrag(canvasLeftRightMargin*2+mangaPanelWidth, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin, 
-	            		(canvasLeftRightMargin+mangaPanelWidth)*2, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin+mangaPanelHeight);
-	            
-	            // set bounding rectangle of the panels
-	            panels.get(i*2).setBound(leftPanelDrag.createPossiblyEmptyRect());
-	            panels.get(i*2+1).setBound(rightPanelDrag.createPossiblyEmptyRect());
-	            
-	            // Draw panels on different layers
-	            shapesTool.paintShapeOnIC(panels.get(i*2).getLayer(), leftPanelDrag);
-	            shapesTool.paintShapeOnIC(panels.get(i*2+1).getLayer(), rightPanelDrag);
+	            // set panel bound and draw panels on different layers
+	            if (i*2 < panels.size()) {
+		            UserDrag leftPanelDrag = new UserDrag(canvasLeftRightMargin, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin, 
+		            		canvasLeftRightMargin+mangaPanelWidth, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin+mangaPanelHeight);
+		            panels.get(i*2).setBound(leftPanelDrag.createPossiblyEmptyRect());
+		            shapesTool.paintShapeOnIC(panels.get(i*2).getLayer(), leftPanelDrag);
+	            }
+	            if (i*2+1 < panels.size()) {
+		            UserDrag rightPanelDrag = new UserDrag(canvasLeftRightMargin*2+mangaPanelWidth, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin, 
+		            		(canvasLeftRightMargin+mangaPanelWidth)*2, (canvasTopBottomMargin+mangaPanelHeight)*i+canvasTopBottomMargin+mangaPanelHeight);
+		            panels.get(i*2+1).setBound(rightPanelDrag.createPossiblyEmptyRect());
+		            shapesTool.paintShapeOnIC(panels.get(i*2+1).getLayer(), rightPanelDrag);
+	            }
 	        }
 		}
 	}
@@ -159,11 +165,14 @@ public final class MangaGenerator {
 	 * Fill panels with key frames
 	 */
 	public static void drawImgsToPanel() {
+		ArrayList<FrameImage> extractedFrameImgs = VideoProcessor.extractKeyFrames();
+		int frameImgCounter = 0;
         for (int i = 0; i<pageList.size(); i++) {
         	MangaPage currentPage = pageList.get(i);
     		for (int j = 0; j<currentPage.getPanels().size(); j++) {
             	MangaPanel panel = currentPage.getPanels().get(j);
-            	panel.fitImageToPanelBound();
+//            	System.out.println("frameImgCounter: "+frameImgCounter);
+            	panel.fitImageToPanelBound(extractedFrameImgs.get(frameImgCounter++));
             }
         }
 	}
@@ -180,7 +189,7 @@ public final class MangaGenerator {
 			for (MangaPanel panel: currentPage.getPanels()) {
 				for (MangaBalloon balloon: panel.getBalloons()) {
 					// update the layer with the new index
-					// for some reason, teh two layers can work with same index, still under investigation
+					// for some reason, the two layers can work with same index, still under investigation
 					balloon.getBallloonLayer().dragFinished(activeLayerIndex);
 //					System.out.println("balloon index"+currentPage.getComp().getLayerIndex(balloon.getBallloonLayer()));
 					balloon.getMangaTextLayer().dragFinished(activeLayerIndex);
