@@ -20,6 +20,7 @@ package pixelitor;
 import com.bric.util.JVM;
 
 import manga.element.MangaGenerator;
+import manga.process.audio.AudioProcessor;
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.VideoProcessor;
 import net.jafama.FastMath;
@@ -88,20 +89,16 @@ public class Pixelitor {
                  * @author PuiWa
                  * initialize the settings for manga
                  */
+                MangaGenerator.preprocessing();
+//                AudioProcessor.extractAudio();
             	MangaGenerator.addNewMangaPage();
-            	//MangaGenerator.addNewPanelLayer();
-            	//MangaGenerator.addNewPanelLayer();
             	MangaGenerator.drawMangaPanels();
-            	SubtitleProcessor.parseSRT();
 //            	SubtitleProcessor.printSubText();
 //            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
             	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
             	MangaGenerator.drawImgsToPanel();
             	MangaGenerator.drawWordBalloons();
             	MangaGenerator.pushBalloonsAndTextToTop();
-//            	VideoProcessor.printVideoEndTimestamp();
-//            	VideoProcessor.extractSubtitle();
-//            	VideoProcessor.extractFrames();
             } catch (Exception e) {
                 Dialogs.showExceptionDialog(e);
             }

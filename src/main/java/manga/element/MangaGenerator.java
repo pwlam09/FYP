@@ -26,6 +26,8 @@ import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.video.Video;
+
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.FrameImage;
 import manga.process.video.VideoProcessor;
@@ -44,6 +46,15 @@ public final class MangaGenerator {
 	
 	private MangaGenerator() {
 		
+	}
+	
+	public static void preprocessing() {
+		// generate subtitle file
+		// extract key frames info (in terms of frame number)
+		// extract key frames (in Mat format and store timestamps)
+		VideoProcessor.preprocessing();
+		// parse the extracted subtitle file and store subtitle text and related timestamps
+		SubtitleProcessor.parseSRT();
 	}
 	
 	public static void addNewMangaPage() {
@@ -165,7 +176,7 @@ public final class MangaGenerator {
 	 * Fill panels with key frames
 	 */
 	public static void drawImgsToPanel() {
-		ArrayList<FrameImage> extractedFrameImgs = VideoProcessor.extractKeyFrames();
+		ArrayList<FrameImage> extractedFrameImgs = VideoProcessor.getKeyFrames();
 		int frameImgCounter = 0;
         for (int i = 0; i<pageList.size(); i++) {
         	MangaPage currentPage = pageList.get(i);

@@ -1,51 +1,19 @@
 package pixelitor.layers;
 
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB_PRE;
-
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.font.FontRenderContext;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.lang.management.ManagementPermission;
 
-import javax.swing.Painter;
-
-import org.bytedeco.javacpp.opencv_core.Rect;
 import org.jdesktop.swingx.painter.AbstractLayoutPainter;
-import org.jdesktop.swingx.painter.TextPainter;
 
-import manga.element.MangaPage;
-import manga.element.MangaPanel;
 import pixelitor.Composition;
-import pixelitor.filters.comp.Flip;
-import pixelitor.filters.comp.Rotate;
 import pixelitor.filters.painters.AreaEffects;
-import pixelitor.filters.painters.TextAdjustmentsPanel;
 import pixelitor.filters.painters.TextSettings;
 import pixelitor.filters.painters.TranslatedMangaTextPainter;
-import pixelitor.filters.painters.TranslatedTextPainter;
-import pixelitor.gui.ImageComponents;
-import pixelitor.gui.PixelitorWindow;
-import pixelitor.gui.utils.OKCancelDialog;
-import pixelitor.history.AddToHistory;
-import pixelitor.history.ContentLayerMoveEdit;
-import pixelitor.history.History;
-import pixelitor.history.NewLayerEdit;
-import pixelitor.history.TextLayerChangeEdit;
-import pixelitor.history.TextLayerRasterizeEdit;
 import pixelitor.tools.shapes.WordBalloon;
-import pixelitor.utils.ImageUtils;
-import pixelitor.utils.UpdateGUI;
-import pixelitor.utils.Utils;
-import pixelitor.utils.test.RandomGUITest;
 
 /**
  * @author PuiWa
@@ -68,9 +36,9 @@ public class MangaText extends TextLayer {
     public void paintLayerOnGraphics(Graphics2D g, boolean firstVisibleLayer) {
     	getTranslatedTextPainter().setFillPaint(getSettings().getColor());
 //    	getTranslatedTextPainter().paint(g, null, comp.getCanvasWidth(), comp.getCanvasHeight());
-    	Rectangle2D bound = balloonRef.getTextBound2D();
+    	Rectangle2D textBound = balloonRef.getTextBound2D();
 //    	System.out.println(bound);
-    	getTranslatedTextPainter().paint(g, null, (int)bound.getWidth(), (int)bound.getHeight());
+    	getTranslatedTextPainter().paint(g, null, (int)textBound.getWidth(), (int)textBound.getHeight());
     }
 
 	public String getText() {
@@ -84,7 +52,7 @@ public class MangaText extends TextLayer {
 	public void setDefaultSetting() {
         this.setSettings(new TextSettings(
             "Default",
-            new Font(Font.SANS_SERIF, Font.BOLD, 100),
+            new Font(Font.SANS_SERIF, Font.BOLD, 14),
             new Color(0, 0, 0),
             new AreaEffects(),
             AbstractLayoutPainter.HorizontalAlignment.LEFT,

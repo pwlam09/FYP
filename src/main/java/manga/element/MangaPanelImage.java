@@ -1,19 +1,10 @@
 package manga.element;
 
-import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.nio.Buffer;
 
-import javax.sound.midi.SysexMessage;
-
-import org.assertj.swing.junit.ant.ImageHandler;
-import org.bytedeco.javacpp.opencv_dnn.Layer;
-
-import manga.process.subtitle.SubtitleProcessor;
-import manga.process.video.VideoProcessor;
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 
@@ -28,13 +19,12 @@ public class MangaPanelImage {
 	
 	private static int imgCount = 0;
 
-	
 	public MangaPanelImage() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public MangaPanelImage(Composition comp, BufferedImage image, long framTimestamp, Rectangle2D panelBound) {
-		this.frameTimestamp = framTimestamp;
+	public MangaPanelImage(Composition comp, BufferedImage image, long frameTimestamp, Rectangle2D panelBound) {
+		this.frameTimestamp = frameTimestamp;
 		this.subImage = scaleAndCropSubImage(image, panelBound);
 		imgCount++;
 		this.layer = comp.addNewEmptyLayer("Image "+imgCount, false);
@@ -106,7 +96,7 @@ public class MangaPanelImage {
 	}
 	
 	/**
-	 * Helper method of |Helper method of scaleAndCropSubImage().
+	 * Helper method of scaleAndCropSubImage().
 	 * Crop input image to MangaPanel bound.
 	 * Now only crop from image center. Will be changed later to crop according to speaker's position.
 	 * @param image

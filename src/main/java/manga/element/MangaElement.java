@@ -3,8 +3,6 @@ package manga.element;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
-import org.bytedeco.javacpp.opencv_core.Rect;
-
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 

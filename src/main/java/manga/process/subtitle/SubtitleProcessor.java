@@ -7,14 +7,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.bytedeco.javacpp.opencv_core.Mat;
 
 import manga.process.video.VideoProcessor;
 
@@ -109,7 +105,7 @@ public class SubtitleProcessor {
 				Integer.parseInt(hour) * 60 * 60 + 
 				Integer.parseInt(minute) * 60 + 
 				Integer.parseInt(sec) + 
-				Integer.parseInt(millisec) / 1000.0) * 1000000L);
+				Integer.parseInt(millisec) / 1000.0) * 1000L);
 //		System.out.println("timestamp: "+timestamp);
 		return timestamp;
 	}
@@ -137,22 +133,27 @@ public class SubtitleProcessor {
 	 */
 	public static ArrayList<String> getSubTextList(long timestamp1, long timestamp2) {
 		ArrayList<String> subTextList = new ArrayList<>();
+		long sShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp1);
+		long eShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp2);
 		for (Map.Entry<SubtitleTimeInfo, String> entry : subTextMap.entrySet()) {
 			long subtitleStartTime = entry.getKey().getsTime();
 			long subtitleEndTime = entry.getKey().geteTime();
-			boolean isAfterCurrFrame = (timestamp1 <= subtitleStartTime) && (subtitleStartTime < timestamp2) &&
-					(Math.abs(subtitleStartTime-timestamp2) >= Math.abs(subtitleEndTime-timestamp2));
-			boolean isBeforeCurrFrame = (timestamp1 < subtitleEndTime) && (subtitleEndTime <= timestamp2) &&
-					(Math.abs(subtitleEndTime-timestamp1) > Math.abs(subtitleStartTime-timestamp1));
-			if (isAfterCurrFrame || isBeforeCurrFrame) {
-//				System.out.println("time1: "+SubtitleProcessor.timestampToTimeString(timestamp1));
-//				System.out.println("time2: "+SubtitleProcessor.timestampToTimeString(timestamp2));
-//				System.out.printf("%s <= %s: %s\n", timestamp1+"", entry.getKey().getsTime()+"", (timestamp1 <= entry.getKey().getsTime())+"");
-//				System.out.printf("%s <= %s: %s", entry.getKey().getsTime()+"", timestamp2+"", (entry.getKey().getsTime() < timestamp2)+"");
+			
+//			boolean isAfterCurrFrame = (sShotTimestamp <= subtitleStartTime) && (subtitleStartTime < eShotTimestamp) &&
+//					(Math.abs(subtitleStartTime-eShotTimestamp) >= Math.abs(subtitleEndTime-eShotTimestamp));
+//			boolean isBeforeCurrFrame = (sShotTimestamp < subtitleEndTime) && (subtitleEndTime <= eShotTimestamp) &&
+//					(Math.abs(subtitleEndTime-sShotTimestamp) > Math.abs(subtitleStartTime-sShotTimestamp));
+//			if (isAfterCurrFrame || isBeforeCurrFrame) {
+//				subTextList.add(entry.getValue());
+//			}
+			
+			if (subtitleStartTime >= sShotTimestamp && subtitleStartTime < eShotTimestamp) {
+//				System.out.println("entry.getValue():"+entry.getValue());
 				subTextList.add(entry.getValue());
-//				System.out.println("Key: " + entry.getKey() + ". Value: " + entry.getValue());
 			}
 		}
+//		System.out.println("sShot Time: "+timestampToTimeString(sShotTimestamp));
+//		System.out.println("eShot Time: "+timestampToTimeString(eShotTimestamp));
 		return subTextList;
 	}
 	
@@ -173,9 +174,9 @@ public class SubtitleProcessor {
 	 */
 	public static String timestampToTimeString(long timestamp) {
 		String colon = ":";
-		int h = (int) (((timestamp / 1000000) / 60) / 60);
-		int m = (int) (timestamp / (1000000 * 60) % 60);
-		int s = (int) (timestamp / 1000000 % 60);
+		int h = (int) (((timestamp / 1000) / 60) / 60);
+		int m = (int) (timestamp / (1000 * 60) % 60);
+		int s = (int) (timestamp / 1000 % 60);
 		return (h+colon+m+colon+s);
 	}
 }

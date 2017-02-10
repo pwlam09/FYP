@@ -1,19 +1,12 @@
 package manga.element;
 
-import java.awt.GradientPaint;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-
-import org.bytedeco.javacpp.opencv_shape.ThinPlateSplineShapeTransformer;
 
 import pixelitor.Composition;
 import pixelitor.NewImage;
 import pixelitor.colors.FillType;
-import pixelitor.gui.ImageComponent;
-import pixelitor.gui.ImageComponents;
 import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
-import pixelitor.layers.Layer;
 
 /**
  * This is for creating a page of manga.
@@ -34,7 +27,7 @@ public class MangaPage {
 	
 	public MangaPage() {
 		this.panels = new ArrayList<>();
-		this.comp = NewImage.addNewImage(FillType.WHITE, 600, 1000, "Page " + pageNum);
+		this.comp = NewImage.addNewImage(FillType.WHITE, 629, 877, "Page " + pageNum);
 		pageNum++;
 	}
 	
