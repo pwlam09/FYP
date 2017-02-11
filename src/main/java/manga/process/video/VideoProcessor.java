@@ -19,9 +19,6 @@ import org.opencv.videoio.VideoCapture;
  * @author PuiWa
  */
 public class VideoProcessor {
-//	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/outfile.mp4";	//for testing
-//	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/clip.mp4";	//for testing
-	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/Spotlight/clip.mp4";	//for testing
 	private static String FFMPEGPath = "C:/PP_program/ffmpeg/ffmpeg-20160820-15dd56c-win64-static/bin";	//for testing
 	private static String VIDEOSEGMENTATION;	//for testing
 	
@@ -33,19 +30,19 @@ public class VideoProcessor {
 		
 	}
 	
-	public static void preprocessing() {
+	public static void preprocessing(String videoPath) {
 //		extractKeyFrameInfo();
-		extractSRT();
+		extractSRT(videoPath);
 		// store key frames for later use
-		frameImgs = extractKeyFrames();
+		frameImgs = extractKeyFrames(videoPath);
 	}
 	
-	private static boolean extractKeyFrameInfo() {
+	private static boolean extractKeyFrameInfo(String videoPath) {
 		File VIDEOSEGMENTATIONFILE = new File(VideoProcessor.class.getResource("/video_segmentation/video_segmentation.exe").getFile());
 		VIDEOSEGMENTATION = VIDEOSEGMENTATIONFILE.getAbsolutePath();
 		
 		try {
-			ProcessBuilder pb = new ProcessBuilder(VIDEOSEGMENTATION, TESTVIDEOPATH);
+			ProcessBuilder pb = new ProcessBuilder(VIDEOSEGMENTATION, videoPath);
 			pb.redirectOutput(Redirect.INHERIT);
 			pb.redirectError(Redirect.PIPE);
 			Process p = pb.start();
@@ -67,7 +64,7 @@ public class VideoProcessor {
 	/**
 	 * extract 1st subtitle stream (SRT format) from mp4 video
 	 */
-	private static boolean extractSRT() {
+	private static boolean extractSRT(String videoPath) {
 		// get relative path of FFmpeg, under target/classes/ffmpeg, full path including "/ffpemg.exe"
 //		ClassLoader classLoader = VideoProcessor.class.getClassLoader();
 //		File ffmpegFile = new File(classLoader.getResource("ffmpeg/ffmpeg.exe").getFile());
@@ -78,7 +75,7 @@ public class VideoProcessor {
 		
 		// build process with command for extracting 1st subtitle stream from video (mp4 format), output file name=sub.srt, auto-overwrite
 		try {
-			ProcessBuilder pb = new ProcessBuilder(FFMPEGPath, "-i", TESTVIDEOPATH, "-an", "-vn", "-c:s:0", "srt", "-y", "sub.srt");
+			ProcessBuilder pb = new ProcessBuilder(FFMPEGPath, "-i", videoPath, "-an", "-vn", "-c:s:0", "srt", "-y", "sub.srt");
 			pb.redirectOutput(Redirect.INHERIT);
 			pb.redirectError(Redirect.PIPE);
 			Process p = pb.start();
@@ -101,15 +98,15 @@ public class VideoProcessor {
 		return frameImgs.size();
 	}
 	
-	public static ArrayList<FrameImage> extractKeyFrames() {
+	public static ArrayList<FrameImage> extractKeyFrames(String videoPath) {
 		File opencvDll = new File(VideoProcessor.class.getResource("/opencv/opencv_java310.dll").getFile());
 		String openCVPath = opencvDll.getAbsolutePath();
 //		System.load(System.getProperty("user.dir")+"/opencv_java310.dll");
 		System.load(openCVPath);
 		
 		ArrayList<FrameImage> allFrameImgs = new ArrayList<>();
-		VideoCapture vid = new VideoCapture(TESTVIDEOPATH);
-		File clipShots = new File(getVideoDirPath()+"/clip_shots.txt");
+		VideoCapture vid = new VideoCapture(videoPath);
+		File clipShots = new File(getVideoDirPath(videoPath)+"/clip_shots.txt");
 //		System.out.println(getVideoDirPath()+"/clip_shots.txt");
 		FileReader fr = null;
 		try {
@@ -183,9 +180,14 @@ public class VideoProcessor {
 		return 0L;
 	}
 	
-	private static String getVideoDirPath() {
-		int eIndex = VideoProcessor.TESTVIDEOPATH.lastIndexOf('/');
-		String filepath = VideoProcessor.TESTVIDEOPATH.substring(0, eIndex);
+	private static String getVideoDirPath(String videoPath) {
+		int eIndex = -1;
+		if (videoPath.lastIndexOf('/') != -1) {
+			eIndex = videoPath.lastIndexOf('/');
+		} else {
+			eIndex = videoPath.lastIndexOf('\\');
+		}
+		String filepath = videoPath.substring(0, eIndex);
 		return filepath;
 	}
 

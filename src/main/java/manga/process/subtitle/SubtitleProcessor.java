@@ -19,7 +19,7 @@ import manga.process.video.VideoProcessor;
  * 
  */
 public class SubtitleProcessor {
-	private static TreeMap<SubtitleTimeInfo, String> subTextMap;
+	private static ArrayList<Subtitle> allSubTextList;
 	private static int subTextCounter = 0;
 	private static SubtitleProcessor instance = new SubtitleProcessor();
 
@@ -38,22 +38,8 @@ public class SubtitleProcessor {
 			+ sp + "(X1:\\d.*?)??" + nl + "(.*?)" + nl + nl);
 	
 	private SubtitleProcessor() {
-		if (subTextMap == null) {
-			subTextMap = new TreeMap<>(
-					new Comparator<SubtitleTimeInfo>() {
-
-						@Override
-						public int compare(SubtitleTimeInfo o1, SubtitleTimeInfo o2) {
-							if (o1.getsTime() > o2.getsTime()) {
-								return 1;
-							} else {
-								if (o1.getsTime() == o2.getsTime())
-									return 0;
-								else 
-									return -1;
-							}
-						}
-					});
+		if (allSubTextList == null) {
+			allSubTextList = new ArrayList<>();
 		}
 	}
 	
@@ -96,7 +82,7 @@ public class SubtitleProcessor {
 			if (subText.contains("<") && subText.contains(">")) {
 				subText = getSubtitleTextWithoutStyle(subText);
 			}
-			subTextMap.put(new SubtitleTimeInfo(sTimestamp, eTimestamp), subText);
+			allSubTextList.add(new Subtitle(sTimestamp, eTimestamp, subText));
 		}
 	}
 	
@@ -131,13 +117,13 @@ public class SubtitleProcessor {
 	 * @param timestamp2 timestamp of another keyframe
 	 * @return a list of subtitle text between two keyframes
 	 */
-	public static ArrayList<String> getSubTextList(long timestamp1, long timestamp2) {
-		ArrayList<String> subTextList = new ArrayList<>();
+	public static ArrayList<Subtitle> getSubTextList(long timestamp1, long timestamp2) {
+		ArrayList<Subtitle> subTextList = new ArrayList<>();
 		long sShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp1);
 		long eShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp2);
-		for (Map.Entry<SubtitleTimeInfo, String> entry : subTextMap.entrySet()) {
-			long subtitleStartTime = entry.getKey().getsTime();
-			long subtitleEndTime = entry.getKey().geteTime();
+		for (Subtitle sub : allSubTextList) {
+			long subtitleStartTime = sub.getsTime();
+			long subtitleEndTime = sub.geteTime();
 			
 //			boolean isAfterCurrFrame = (sShotTimestamp <= subtitleStartTime) && (subtitleStartTime < eShotTimestamp) &&
 //					(Math.abs(subtitleStartTime-eShotTimestamp) >= Math.abs(subtitleEndTime-eShotTimestamp));
@@ -149,7 +135,7 @@ public class SubtitleProcessor {
 			
 			if (subtitleStartTime >= sShotTimestamp && subtitleStartTime < eShotTimestamp) {
 //				System.out.println("entry.getValue():"+entry.getValue());
-				subTextList.add(entry.getValue());
+				subTextList.add(sub);
 			}
 		}
 //		System.out.println("sShot Time: "+timestampToTimeString(sShotTimestamp));
@@ -161,9 +147,9 @@ public class SubtitleProcessor {
 	 * For testing.
 	 */
 	public static void printSubText() {
-		for (Map.Entry<SubtitleTimeInfo, String> entry : subTextMap.entrySet()) {
+		for (Subtitle sub : allSubTextList) {
 //			VideoProcessor.printFrameSubtitleTimeMatch(entry.getKey().getsTime(), entry.getKey().geteTime());
-			System.out.println("Key: " + entry.getKey() + ". Value: " + entry.getValue());
+			System.out.println(sub);
 		}
 	}
 	

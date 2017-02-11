@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 
+import manga.process.subtitle.Subtitle;
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.FrameImage;
 import manga.process.video.VideoProcessor;
@@ -108,11 +109,11 @@ public class MangaPanel {
     public void addMangaBalloon() {
 		String linkedText = "";
 		long frameTimestamp = panelImg.getFrameTimestamp();
-		ArrayList<String> subTextList = SubtitleProcessor.getSubTextList(frameTimestamp, VideoProcessor.getNextKeyframeTimestamp(frameTimestamp));
+		ArrayList<Subtitle> subTextList = SubtitleProcessor.getSubTextList(frameTimestamp, VideoProcessor.getNextKeyframeTimestamp(frameTimestamp));
 		
 		if (subTextList.size() != 0) {
-			for (String str: subTextList) {
-				linkedText = linkedText + str +" ";
+			for (Subtitle sub: subTextList) {
+				linkedText = linkedText + sub.getText() +" ";
 			}
 	    	
 	    	Composition comp = page.getComp();

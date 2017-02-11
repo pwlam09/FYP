@@ -19,6 +19,8 @@ package pixelitor.menus;
 
 import com.bric.util.JVM;
 import com.jhlabs.composite.MultiplyComposite;
+
+import manga.process.video.VideoFileChooser;
 import pixelitor.AppLogic;
 import pixelitor.Build;
 import pixelitor.Composition;
@@ -221,6 +223,17 @@ public class MenuBar extends JMenuBar {
                 FileChoosers.open();
             }
         }).alwaysEnabled().withKey(CTRL_O).add();
+        
+		/**
+		 * @author PuiWa
+		 * added open video button
+		 */
+        fileMenu.buildAction(new MenuAction("Open Video...") {
+            @Override
+            public void onClick() {
+                VideoFileChooser.open();
+            }
+        }).alwaysEnabled().add();
 
         // recent files
         JMenu recentFiles = RecentFilesMenu.getInstance();

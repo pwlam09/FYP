@@ -48,11 +48,11 @@ public final class MangaGenerator {
 		
 	}
 	
-	public static void preprocessing() {
+	public static void preprocessing(String videoPath) {
 		// generate subtitle file
 		// extract key frames info (in terms of frame number)
 		// extract key frames (in Mat format and store timestamps)
-		VideoProcessor.preprocessing();
+		VideoProcessor.preprocessing(videoPath);
 		// parse the extracted subtitle file and store subtitle text and related timestamps
 		SubtitleProcessor.parseSRT();
 	}

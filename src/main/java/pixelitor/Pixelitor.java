@@ -84,21 +84,6 @@ public class Pixelitor {
                 // here because it is IO-intensive and it should not
                 // slow down the loading of the GUI
                 preloadFontNames();
-                
-                /**
-                 * @author PuiWa
-                 * initialize the settings for manga
-                 */
-                MangaGenerator.preprocessing();
-//                AudioProcessor.extractAudio();
-            	MangaGenerator.addNewMangaPage();
-            	MangaGenerator.drawMangaPanels();
-//            	SubtitleProcessor.printSubText();
-//            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
-            	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
-            	MangaGenerator.drawImgsToPanel();
-            	MangaGenerator.drawWordBalloons();
-            	MangaGenerator.pushBalloonsAndTextToTop();
             } catch (Exception e) {
                 Dialogs.showExceptionDialog(e);
             }
