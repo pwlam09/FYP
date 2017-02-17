@@ -23,12 +23,11 @@ public class MangaPage {
 	private double leftMargin;
 	private double rightMargin;
 
-	private static int pageNum = 1;
+	private static int pageNum = 0;
 	
 	public MangaPage() {
 		this.panels = new ArrayList<>();
-		this.comp = NewImage.addNewImage(FillType.WHITE, 629, 877, "Page " + pageNum);
-		pageNum++;
+		this.comp = NewImage.addNewImage(FillType.WHITE, 629, 877, "Page " + (++pageNum));
 	}
 	
 	public Composition getComp() {

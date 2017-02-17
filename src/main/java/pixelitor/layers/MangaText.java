@@ -20,6 +20,10 @@ import pixelitor.tools.shapes.WordBalloon;
  *
  */
 public class MangaText extends TextLayer {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private WordBalloon balloonRef;
 	private static int textNum = 0;
 	

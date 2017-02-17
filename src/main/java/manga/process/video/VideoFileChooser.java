@@ -1,6 +1,8 @@
 package manga.process.video;
 
 import java.io.File;
+import java.sql.Date;
+import java.util.Calendar;
 
 import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
@@ -17,6 +19,10 @@ import pixelitor.io.OpenSaveManager;
 import pixelitor.utils.AppPreferences;
 import pixelitor.utils.Messages;
 
+/**
+ * @author PuiWa
+ *
+ */
 public class VideoFileChooser {
 //	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/outfile.mp4";	//for testing
 //	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/clip.mp4";	//for testing
@@ -30,6 +36,8 @@ public class VideoFileChooser {
 	
 	private static final FileFilter[] DEFAULT_OPEN_SAVE_FILTERS = {mpegFilter};
 	private static final FileFilter[] NON_DEFAULT_OPEN_SAVE_FILTERS = {};
+	
+	public static final String[] SUPPORTED_INPUT_EXTENSIONS = {"mp4"};
 	
 	private VideoFileChooser() {}
 	
@@ -57,26 +65,44 @@ public class VideoFileChooser {
 
             lastOpenDir = selectedFile.getParentFile();
 
-            /**
-             * @author PuiWa
-             * initialize the settings for manga
-             */
-            MangaGenerator.preprocessing(selectedFile.getAbsolutePath());
-//            AudioProcessor.extractAudio();
-        	MangaGenerator.addNewMangaPage();
-        	MangaGenerator.drawMangaPanels();
-//        	SubtitleProcessor.printSubText();
-//        	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
-        	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
-        	MangaGenerator.drawImgsToPanel();
-        	MangaGenerator.drawWordBalloons();
-        	MangaGenerator.pushBalloonsAndTextToTop();
+            if (FileExtensionUtils.isSupportedExtension(fileName, VideoFileChooser.SUPPORTED_INPUT_EXTENSIONS)) {
+            	// Get current time
+            	long start = System.currentTimeMillis();
+                
+                /**
+                 * @author PuiWa
+                 * initialize the settings for manga
+                 */
+                MangaGenerator.preprocessing(selectedFile.getAbsolutePath());
+//                AudioProcessor.extractAudio();
+            	MangaGenerator.addNewMangaPage();
+            	MangaGenerator.drawMangaPanels();
+//            	SubtitleProcessor.printSubText();
+//            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
+            	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
+            	MangaGenerator.drawImgsToPanel();
+            	MangaGenerator.drawWordBalloons();
+            	MangaGenerator.pushBalloonsAndTextToTop();
+
+            	// Get elapsed time in milliseconds
+            	long elapsedTimeMillis = System.currentTimeMillis()-start;
+
+            	// Get elapsed time in seconds
+            	float elapsedTimeSec = elapsedTimeMillis/1000F%60;
+
+            	// Get elapsed time in minutes
+            	float elapsedTimeMin = elapsedTimeMillis/(60*1000F);
+            	
+                System.out.printf("Elapsed time: %d:%d.%d\n", (int)elapsedTimeMin, (int)elapsedTimeSec, (int)(elapsedTimeMillis % 1000F));
+            } else { // unsupported extension
+                handleUnsupportedExtensionLoading(fileName);
+            }
         } else if (status == JFileChooser.CANCEL_OPTION) {
             // cancelled
         }
     }
-    
-    private static void handleUnsupportedExtensionLoading(String fileName) {
+
+	private static void handleUnsupportedExtensionLoading(String fileName) {
         String extension = FileExtensionUtils.getFileExtension(fileName);
         String msg = "Could not load " + fileName + ", because ";
         if (extension == null) {

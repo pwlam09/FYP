@@ -77,7 +77,9 @@ public class SubtitleProcessor {
 			long sTimestamp = convertTimeToTimestamp(m.group(2), m.group(3), m.group(4), m.group(5));
 			long eTimestamp = convertTimeToTimestamp(m.group(6), m.group(7), m.group(8), m.group(9));
 //			System.out.println("sTimestamp: "+sTimestamp);
-			String subText = m.group(11).replaceAll("\\r\\n|\\r|\\n", " ");	// subtitle may contain line break
+			// subtitle may contain line break
+			// subtitle may contain hyphen which indicates speaker (delete?)
+			String subText = m.group(11).replaceAll("\\r\\n|\\r|\\n", " ").replaceAll("- ", "");	
 			// trim style tags of extracted text if any
 			if (subText.contains("<") && subText.contains(">")) {
 				subText = getSubtitleTextWithoutStyle(subText);
@@ -130,7 +132,7 @@ public class SubtitleProcessor {
 //			boolean isBeforeCurrFrame = (sShotTimestamp < subtitleEndTime) && (subtitleEndTime <= eShotTimestamp) &&
 //					(Math.abs(subtitleEndTime-sShotTimestamp) > Math.abs(subtitleStartTime-sShotTimestamp));
 //			if (isAfterCurrFrame || isBeforeCurrFrame) {
-//				subTextList.add(entry.getValue());
+//				subTextList.add(sub);
 //			}
 			
 			if (subtitleStartTime >= sShotTimestamp && subtitleStartTime < eShotTimestamp) {
@@ -164,5 +166,9 @@ public class SubtitleProcessor {
 		int m = (int) (timestamp / (1000 * 60) % 60);
 		int s = (int) (timestamp / 1000 % 60);
 		return (h+colon+m+colon+s);
+	}
+
+	public static ArrayList<Subtitle> getAllSubTextList() {
+		return allSubTextList;
 	}
 }

@@ -55,11 +55,11 @@ public final class MangaGenerator {
 		VideoProcessor.preprocessing(videoPath);
 		// parse the extracted subtitle file and store subtitle text and related timestamps
 		SubtitleProcessor.parseSRT();
+		VideoProcessor.detectSpeakersPosition(videoPath);
 	}
 	
 	public static void addNewMangaPage() {
 		keyFrameCount = VideoProcessor.getKeyFrameCount();
-//		System.out.println("keyframecount: "+keyFrameCount);
 		int pageNum = keyFrameCount / numOfPanelsPerPage;
 		for (int i = 0; i<pageNum; i++) {
 			MangaPage page = new MangaPage();
@@ -129,8 +129,8 @@ public final class MangaGenerator {
 	        Canvas canvas = layer.getComp().getCanvas();
 	        int canvasWidth = canvas.getWidth();
 	        int canvasHeight = canvas.getHeight();
-	        int canvasLeftRightMargin = (int)(canvas.getWidth()*0.05);
-	        int canvasTopBottomMargin = (int)(canvas.getHeight()*0.05);
+	        int canvasLeftRightMargin = (int)(canvas.getWidth()*0.03);
+	        int canvasTopBottomMargin = (int)(canvas.getHeight()*0.03);
 	        int mangaPanelWidth = (int)((canvas.getWidth()-canvasLeftRightMargin*3)/2);
 	        int mangaPanelHeight = (int)((canvas.getHeight()-canvasTopBottomMargin*4)/3);
 	        
@@ -167,7 +167,7 @@ public final class MangaGenerator {
 	public static void drawWordBalloons() {
 		for (MangaPage page: pageList) {
 			for (MangaPanel panel: page.getPanels()) {
-				panel.addMangaBalloon();
+				panel.addMangaBalloons();
 			}
 		}
 	}
@@ -182,7 +182,6 @@ public final class MangaGenerator {
         	MangaPage currentPage = pageList.get(i);
     		for (int j = 0; j<currentPage.getPanels().size(); j++) {
             	MangaPanel panel = currentPage.getPanels().get(j);
-//            	System.out.println("frameImgCounter: "+frameImgCounter);
             	panel.fitImageToPanelBound(extractedFrameImgs.get(frameImgCounter++));
             }
         }
@@ -202,9 +201,7 @@ public final class MangaGenerator {
 					// update the layer with the new index
 					// for some reason, the two layers can work with same index, still under investigation
 					balloon.getBallloonLayer().dragFinished(activeLayerIndex);
-//					System.out.println("balloon index"+currentPage.getComp().getLayerIndex(balloon.getBallloonLayer()));
 					balloon.getMangaTextLayer().dragFinished(activeLayerIndex);
-//					System.out.println("text index"+currentPage.getComp().getLayerIndex(balloon.getMangaTextLayer()));
 				}
 			}
 		}

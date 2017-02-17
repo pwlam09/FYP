@@ -8,6 +8,15 @@ import java.awt.image.BufferedImage;
 import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 
+import org.jdesktop.swingx.JXTipOfTheDay.ShowOnStartupChoice;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Scalar;
+import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.imgproc.Imgproc;
+
+import manga.detect.Face;
+import manga.detect.Speaker;
 import manga.process.subtitle.Subtitle;
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.FrameImage;
@@ -38,27 +47,17 @@ public class MangaPanel {
 	private ImageLayer layer;	// a panel refers to a layer
 	private MangaPanelImage panelImg;
 	private Rectangle2D bound;	//bounding rectangle of panel
-	private ArrayList<MangaBalloon> balloonList;
+	private ArrayList<MangaBalloon> balloons;
 	
 	private static int panelCount = 0;
 	
 	public MangaPanel(MangaPage page) {
 		this.page = page;
-		panelCount++;
-		this.layer = page.getComp().addNewEmptyLayer("Panel "+panelCount, false);
+		this.layer = page.getComp().addNewEmptyLayer("Panel "+(++panelCount), false);
 		this.panelImg = new MangaPanelImage();
 		this.bound = new Rectangle2D.Float();
-		this.balloonList = new ArrayList<>();
+		this.balloons = new ArrayList<>();
 	}
-	
-//	public MangaPanel(Composition comp, Rectangle2D bound) {
-//		this.comp = comp;
-//		this.layer = comp.addNewEmptyLayer("Panel "+panelCount, false);
-//		panelCount++;
-//		this.panelImg = new MangaPanelImage();
-//		this.bound = bound;
-//		this.balloonList = new ArrayList<>();
-//	}
 
 	public void setBound(Rectangle2D boundingRect) {
 		this.bound = boundingRect;
@@ -70,13 +69,6 @@ public class MangaPanel {
 	
 	public ImageLayer getLayer() {
 		return this.layer;
-	}
-	
-	/**
-	 * for testing purpose
-	 */
-	public void printBound() {
-		System.out.println(this.bound);
 	}
 	
 	public void setImage(MangaPanelImage panelImg) {
@@ -94,7 +86,15 @@ public class MangaPanel {
             Selection selection = new Selection(bound, comp.getIC());
             comp.setNewSelection(selection);
             
-	        panelImg = new MangaPanelImage(comp, frameImage.getImg(), frameImage.getcShotTimestamp(), bound);
+            ArrayList<Face> speakerFaces = new ArrayList<>();
+            for (Subtitle subtitle : SubtitleProcessor.getAllSubTextList()) {
+            	if (subtitle.getsTime() >= frameImage.getsShotTimestamp() && subtitle.geteTime() <= frameImage.geteShotTimestamp()) {
+            		if (subtitle.getSpeaker() != null) {
+                		speakerFaces.add(subtitle.getSpeaker().getFace());
+            		}
+            	}
+            }
+	        panelImg = new MangaPanelImage(comp, frameImage.getImg(), frameImage.getcShotTimestamp(), bound, speakerFaces);
 	        
 	        // image to new layer
 	        ImageLayer layer = panelImg.getLayer();
@@ -106,7 +106,7 @@ public class MangaPanel {
         }
     }
     
-    public void addMangaBalloon() {
+    public void addMangaBalloons() {
 		String linkedText = "";
 		long frameTimestamp = panelImg.getFrameTimestamp();
 		ArrayList<Subtitle> subTextList = SubtitleProcessor.getSubTextList(frameTimestamp, VideoProcessor.getNextKeyframeTimestamp(frameTimestamp));
@@ -118,8 +118,6 @@ public class MangaPanel {
 	    	
 	    	Composition comp = page.getComp();
 
-//	    	WordBalloon balloonRef = new WordBalloon(bound.getX(), bound.getY(), -100, -100);
-//	    	UserDrag balloonDrag = new UserDrag(bound.getX()+100, bound.getY()+100, bound.getX(), bound.getY());
 	    	UserDrag balloonDrag = new UserDrag(bound.getX(), bound.getY(), bound.getX()+100, bound.getY()+100);
 	    	WordBalloon balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
 
@@ -136,12 +134,13 @@ public class MangaPanel {
 	        
 	        newSettings.setText(linkedText);
 	        mangaTextLayer.setSettings(newSettings);
+	        mangaTextLayer.commitSettings(oldSettings);
 	    	
 	        // set text translation within balloon bound, to be changed
 	    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
 	    	
 	    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);
-	    	balloonList.add(balloon);
+	    	balloons.add(balloon);
 	    	
 			// initialize shapes tool for drawing balloon
 	        ShapesTool shapesTool = Tools.SHAPES;
@@ -150,17 +149,15 @@ public class MangaPanel {
 	        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
 	        shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
 	        // reset stroke join and width to default
-	        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 5);
+	        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 1);
 	        
 	        // paint balloon
-//	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), new UserDrag(bound.getX(), bound.getY(), bound.getX()+100, bound.getY()+100));
 	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), balloonDrag);
-//	    	System.out.println("Userdrag: "+new UserDrag(bound.getX()+100, bound.getY()+100, bound.getX(), bound.getY()));
         }
     }
 
 	public ArrayList<MangaBalloon> getBalloons() {
-		return balloonList;
+		return balloons;
 	}
 	
 	public MangaPage getPage() {
