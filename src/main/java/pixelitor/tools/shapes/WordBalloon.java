@@ -1,7 +1,13 @@
 package pixelitor.tools.shapes;
 
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -11,10 +17,12 @@ import org.mockito.Matchers;
  * @author PuiWa
  * Balloon shape based on https://commons.wikimedia.org/wiki/File:Speech_balloon.svg
  */
-public class WordBalloon extends GeneralShape {
+public class WordBalloon implements Shape {
+	private Shape wordBalloon;
 	private Rectangle2D textBound;
 	
 	public WordBalloon(double x, double y, double width, double height) {
+		GeneralPath path = new GeneralPath();
 		double tailStartX;
 		double tailStartY;
 		double arcStartX;
@@ -53,13 +61,13 @@ public class WordBalloon extends GeneralShape {
 		Arc2D arc = new Arc2D.Double(arcStartX, arcStartY, Math.abs(width), 0.83333333f*Math.abs(height), startDeg, 337.86, Arc2D.OPEN);
 		
 		Point2D endPt1 = arc.getStartPoint();
-		Point2D endPt2 = arc.getEndPoint();
+
+		path = new GeneralPath(arc);
 		
-		path.moveTo(endPt1.getX(), endPt1.getY());
-		path.lineTo(tailStartX, tailStartY);
-		path.lineTo(endPt2.getX(), endPt2.getY());
+		path.lineTo((float)tailStartX, (float)tailStartY);
+		path.lineTo((float)endPt1.getX(), (float)endPt1.getY());
 		
-		path.append(arc, false);
+		wordBalloon = path;
 		
 		// set text bound
 		Rectangle2D arcBound = arc.getBounds2D();
@@ -87,5 +95,65 @@ public class WordBalloon extends GeneralShape {
 	
 	public Rectangle2D getTextBound2D() {
 		return textBound;
+	}
+
+	@Override
+	public Rectangle getBounds() {
+		// TODO Auto-generated method stub
+		return wordBalloon.getBounds();
+	}
+
+	@Override
+	public Rectangle2D getBounds2D() {
+		// TODO Auto-generated method stub
+		return wordBalloon.getBounds2D();
+	}
+
+	@Override
+	public boolean contains(double x, double y) {
+		// TODO Auto-generated method stub
+		return wordBalloon.contains(x, y);
+	}
+
+	@Override
+	public boolean contains(Point2D p) {
+		// TODO Auto-generated method stub
+		return wordBalloon.contains(p);
+	}
+
+	@Override
+	public boolean intersects(double x, double y, double w, double h) {
+		// TODO Auto-generated method stub
+		return wordBalloon.intersects(x, y, w, h);
+	}
+
+	@Override
+	public boolean intersects(Rectangle2D r) {
+		// TODO Auto-generated method stub
+		return wordBalloon.intersects(r);
+	}
+
+	@Override
+	public boolean contains(double x, double y, double w, double h) {
+		// TODO Auto-generated method stub
+		return wordBalloon.contains(x, y, w, h);
+	}
+
+	@Override
+	public boolean contains(Rectangle2D r) {
+		// TODO Auto-generated method stub
+		return wordBalloon.contains(r);
+	}
+
+	@Override
+	public PathIterator getPathIterator(AffineTransform at) {
+		// TODO Auto-generated method stub
+		return wordBalloon.getPathIterator(at);
+	}
+
+	@Override
+	public PathIterator getPathIterator(AffineTransform at, double flatness) {
+		// TODO Auto-generated method stub
+		return wordBalloon.getPathIterator(at, flatness);
 	}
 }
