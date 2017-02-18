@@ -28,13 +28,13 @@ import pixelitor.tools.shapes.WordBalloon;
  * @author PuiWa
  * This is for creating a manga balloon.
  * A balloon contains a balloon layer and MangaText layer.
- * The text is bounded by a rectangle within balloon (deadspace for lettering).
+ * The text is bounded by a rectangle within balloon (dead space for lettering).
  */
 public class MangaBalloon {
 	private MangaPanel panel;	// the panel the balloon belongs to
 	
 	private MangaText mangaTextLayer;	// MangaText layer
-	private ArrayList<String> subTextList;
+	private ArrayList<String> subtitles;
 	
 	private ImageLayer balloonLayer;	// layer of balloon drawing
 	private WordBalloon balloonRef;	// balloon object reference
@@ -55,7 +55,7 @@ public class MangaBalloon {
 		
 		this.balloonRef = balloonRef;
 		
-		this.subTextList = new ArrayList<>();
+		this.subtitles = new ArrayList<>();
 	}
 
 	public ImageLayer getBallloonLayer() {
@@ -66,28 +66,11 @@ public class MangaBalloon {
 		return mangaTextLayer;
 	}
 	
-	public Rectangle2D getBound() {
-		return balloonRef.getBounds2D();
-	}
-	
-	public String getLinkedText() {
-		String linkedText = "";
-		for (String str: subTextList) {
-			linkedText = linkedText + str;
-		}
-		return linkedText;
-	}
-	
 	public static WordBalloon calculateWordBalloonRef(Rectangle2D availableBound, Rectangle2D textBound, Font font, String balloonText) {
-//		Rectangle2D testBound = new Rectangle2D.Double(0, 0, 300, 300);
-//		Font testFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
-		
 		Canvas c = new Canvas();
 		FontMetrics fm = c.getFontMetrics(font);
 		int fontWidth = fm.stringWidth(balloonText);
 		int fontHeight = fm.getHeight();
-//		System.out.println("fm fontHeight: "+fontHeight);
-//		System.out.println("fm ascent: "+fm.getAscent());
 		
 		AttributedString attrString = new AttributedString(balloonText);
 	    int paragraphStart = 0;
@@ -129,15 +112,12 @@ public class MangaBalloon {
 
             // Move y-coordinate by the ascent of the layout.
             drawPosY += layout.getAscent();
-//            System.out.println("layout.getAscent(): "+layout.getAscent());
 
             // Move y-coordinate in preparation for next layout.
             drawPosY += layout.getDescent() + layout.getLeading();
         }
         drawPosY += layout.getAscent();
-        drawPosY += layout.getAscent();
-//		System.out.println("fontWidth: "+fontWidth);
-//		System.out.println("fontHeight: "+fontHeight);
+        drawPosY += layout.getDescent() + layout.getLeading();
 		return new WordBalloon(availableBound.getX(), availableBound.getY(), availableBound.getWidth(), drawPosY);
 	}
 }

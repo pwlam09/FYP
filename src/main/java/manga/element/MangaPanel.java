@@ -7,6 +7,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
+import java.util.concurrent.SynchronousQueue;
 
 import org.jdesktop.swingx.JXTipOfTheDay.ShowOnStartupChoice;
 import org.opencv.core.Point;
@@ -19,7 +20,7 @@ import manga.detect.Face;
 import manga.detect.Speaker;
 import manga.process.subtitle.Subtitle;
 import manga.process.subtitle.SubtitleProcessor;
-import manga.process.video.FrameImage;
+import manga.process.video.KeyFrame;
 import manga.process.video.VideoProcessor;
 import pixelitor.Composition;
 import pixelitor.filters.painters.TextSettings;
@@ -49,6 +50,8 @@ public class MangaPanel {
 	private Rectangle2D bound;	//bounding rectangle of panel
 	private ArrayList<MangaBalloon> balloons;
 	
+	private static int imgCounter = 0; // for testing
+	
 	private static int panelCount = 0;
 	
 	public MangaPanel(MangaPage page) {
@@ -63,38 +66,42 @@ public class MangaPanel {
 		this.bound = boundingRect;
 	}
 	
-	public Rectangle2D getBound() {
-		return this.bound;
-	}
-	
 	public ImageLayer getLayer() {
 		return this.layer;
-	}
-	
-	public void setImage(MangaPanelImage panelImg) {
-		this.panelImg = panelImg;
 	}
 	
     /**
      * Image fit to panel bounding rectangle, starts from top-left corner.
      * The image will be drawn onto a new layer, bounded by the area within selection.
      */
-    public void fitImageToPanelBound(FrameImage frameImage) {
-        if (frameImage != null) {
+    public void fitImageToPanelBound(KeyFrame keyFrame) {
+        if (keyFrame != null) {
         	// setup selection with the bounding rectangle of MangaPanel
         	Composition comp = page.getComp();
             Selection selection = new Selection(bound, comp.getIC());
             comp.setNewSelection(selection);
             
             ArrayList<Face> speakerFaces = new ArrayList<>();
-            for (Subtitle subtitle : SubtitleProcessor.getAllSubTextList()) {
-            	if (subtitle.getsTime() >= frameImage.getsShotTimestamp() && subtitle.geteTime() <= frameImage.geteShotTimestamp()) {
+            for (Subtitle subtitle : SubtitleProcessor.getAllSubtitles()) {
+            	if (subtitle.getsTime() >= keyFrame.getsShotTimestamp() && subtitle.geteTime() <= keyFrame.geteShotTimestamp()) {
             		if (subtitle.getSpeaker() != null) {
                 		speakerFaces.add(subtitle.getSpeaker().getFace());
+                		
+                		// testing
+            			Rect speakerFaceBound = subtitle.getSpeaker().getFace().getBound();
+                		Imgproc.rectangle(keyFrame.getImg(), new Point(speakerFaceBound.x, speakerFaceBound.y), 
+                				new Point(speakerFaceBound.x+speakerFaceBound.width, speakerFaceBound.y+speakerFaceBound.height), 
+                				new Scalar(0, 255, 0));
             		}
             	}
             }
-	        panelImg = new MangaPanelImage(comp, frameImage.getImg(), frameImage.getcShotTimestamp(), bound, speakerFaces);
+            
+	        panelImg = new MangaPanelImage(comp, keyFrame, bound, speakerFaces);
+
+	        // testing
+    		String filename = String.format("output%d.jpg", ++imgCounter);
+    		System.out.println(String.format("Writing %s", filename));
+    		Imgcodecs.imwrite(filename, keyFrame.getImg());
 	        
 	        // image to new layer
 	        ImageLayer layer = panelImg.getLayer();
@@ -107,36 +114,39 @@ public class MangaPanel {
     }
     
     public void addMangaBalloons() {
-		String linkedText = "";
-		long frameTimestamp = panelImg.getFrameTimestamp();
-		ArrayList<Subtitle> subTextList = SubtitleProcessor.getSubTextList(frameTimestamp, VideoProcessor.getNextKeyframeTimestamp(frameTimestamp));
+		KeyFrame keyFrame = panelImg.getKeyFrame();
+//		if (MangaGenerator.getCurrTimestamp() != 0) {
+//			MangaGenerator.setCurrTimestamp(keyFrame.getsShotTimestamp());
+//		}
+		System.out.println("current timestamp for balloon: "+MangaGenerator.getCurrTimestamp());
+		System.out.println("end timestamp for shot: "+keyFrame.geteShotTimestamp());
+		ArrayList<Subtitle> subtitles = SubtitleProcessor.getSubtitles(MangaGenerator.getCurrTimestamp(), keyFrame.geteShotTimestamp());
 		
-		if (subTextList.size() != 0) {
-			for (Subtitle sub: subTextList) {
-				linkedText = linkedText + sub.getText() +" ";
-			}
+		System.out.println("substitles.size(): "+subtitles.size());
+		
+		MangaGenerator.setCurrTimestamp(keyFrame.geteShotTimestamp());
+    	
+		String linkedSubtitlesText = "";
+		
+		if (subtitles.size() != 0) {
+			linkedSubtitlesText = Subtitle.getLinkedSubtitlesText(subtitles);
 	    	
 	    	Composition comp = page.getComp();
 
 	    	UserDrag balloonDrag = new UserDrag(bound.getX(), bound.getY(), bound.getX()+100, bound.getY()+100);
 	    	WordBalloon balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
 
-			Font testFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
-			balloonRef = MangaBalloon.calculateWordBalloonRef(balloonRef.getBounds2D(), balloonRef.getTextBound2D(), testFont, linkedText);
+			// this font will be used to calculate the area required for displaying the subtitle text in this font
+	    	Font defaultFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
+			
+	    	// calculate the balloon for displaying subtitle text
+			balloonRef = MangaBalloon.calculateWordBalloonRef(balloonRef.getBounds2D(), balloonRef.getTextBound2D(), defaultFont, linkedSubtitlesText);
 			balloonDrag = createUserDragFromShape(balloonRef);
 			
 	    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
-	    	mangaTextLayer.setDefaultSetting();
+	    	mangaTextLayer.setAndCommitDefaultSetting(defaultFont, linkedSubtitlesText);
 	    	
-	    	// any change to textSettings need to use setSettings(), otherwise it will not be applied
-	    	TextSettings oldSettings = mangaTextLayer.getSettings();
-	        TextSettings newSettings = new TextSettings(oldSettings);
-	        
-	        newSettings.setText(linkedText);
-	        mangaTextLayer.setSettings(newSettings);
-	        mangaTextLayer.commitSettings(oldSettings);
-	    	
-	        // set text translation within balloon bound, to be changed
+	        // set text translation within balloon bound
 	    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
 	    	
 	    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);

@@ -29,7 +29,7 @@ import java.util.List;
 import org.opencv.video.Video;
 
 import manga.process.subtitle.SubtitleProcessor;
-import manga.process.video.FrameImage;
+import manga.process.video.KeyFrame;
 import manga.process.video.VideoProcessor;
 
 /**
@@ -43,7 +43,8 @@ public final class MangaGenerator {
 	private static ArrayList<MangaPage> pageList=new ArrayList<>();
 	private static int keyFrameCount = 0;
 	private static int numOfPanelsPerPage = 6;
-	
+	private static double currTimestamp = 0;
+
 	private MangaGenerator() {
 		
 	}
@@ -55,7 +56,16 @@ public final class MangaGenerator {
 		VideoProcessor.preprocessing(videoPath);
 		// parse the extracted subtitle file and store subtitle text and related timestamps
 		SubtitleProcessor.parseSRT();
+		SubtitleProcessor.printAllSubtitles();
 		VideoProcessor.detectSpeakersPosition(videoPath);
+	}
+	
+	public static double getCurrTimestamp() {
+		return currTimestamp;
+	}
+
+	public static void setCurrTimestamp(double currTimestamp) {
+		MangaGenerator.currTimestamp = currTimestamp;
 	}
 	
 	public static void addNewMangaPage() {
@@ -176,7 +186,7 @@ public final class MangaGenerator {
 	 * Fill panels with key frames
 	 */
 	public static void drawImgsToPanel() {
-		ArrayList<FrameImage> extractedFrameImgs = VideoProcessor.getKeyFrames();
+		ArrayList<KeyFrame> extractedFrameImgs = VideoProcessor.getKeyFrames();
 		int frameImgCounter = 0;
         for (int i = 0; i<pageList.size(); i++) {
         	MangaPage currentPage = pageList.get(i);

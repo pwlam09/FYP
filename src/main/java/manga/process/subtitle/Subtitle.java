@@ -1,5 +1,7 @@
 package manga.process.subtitle;
 
+import java.util.ArrayList;
+
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
@@ -10,25 +12,35 @@ import manga.detect.Speaker;
  *
  */
 public class Subtitle {
-	private long sTime;
-	private long eTime;
+	private double sTime;
+	private double eTime;
 	private String text;
+
 	private Speaker speaker;
 
-	public Subtitle(long sTime, long eTime, String text) {
+	private static int subTextCounter = 0;	// for testing
+	
+	public static int getSubTextCounter() {
+		return subTextCounter;
+	}
+
+	public Subtitle(double sTime, double eTime, String text) {
 		this.sTime = sTime;
 		this.eTime = eTime;
 		this.text = text;
 	}
 
-	public long getsTime() {
+	public double getsTime() {
 		return sTime;
 	}
 
-	public long geteTime() {
+	public double geteTime() {
 		return eTime;
 	}
 	
+	/**
+	 * For testing
+	 */
 	public String getText() {
 		return text;
 	}
@@ -39,5 +51,14 @@ public class Subtitle {
 
 	public void setSpeaker(Speaker speaker) {
 		this.speaker = speaker;
+	}
+
+	public static String getLinkedSubtitlesText(ArrayList<Subtitle> subtitles) {
+		String linkedSubtitlesText = "";
+		for (Subtitle subtitle: subtitles) {
+			System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subTextCounter, subtitle.sTime ,subtitle.eTime, subtitle.text);
+			linkedSubtitlesText = linkedSubtitlesText + subtitle.text +" ";
+		}
+		return linkedSubtitlesText;
 	}
 }

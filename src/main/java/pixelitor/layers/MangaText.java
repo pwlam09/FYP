@@ -53,16 +53,20 @@ public class MangaText extends TextLayer {
 		getSettings().setText(text);
 	}
 	
-	public void setDefaultSetting() {
-        this.setSettings(new TextSettings(
-            "Default",
-            new Font(Font.SANS_SERIF, Font.BOLD, 14),
-            new Color(0, 0, 0),
-            new AreaEffects(),
-            AbstractLayoutPainter.HorizontalAlignment.LEFT,
-            AbstractLayoutPainter.VerticalAlignment.TOP,
-            false
-        ));
+	public void setAndCommitDefaultSetting(Font font, String linkedSubtitles) {
+		TextSettings oldSettings = getSettings();
+		TextSettings newSettings = new TextSettings(
+	    		linkedSubtitles,
+	            font,
+	            new Color(0, 0, 0),
+	            new AreaEffects(),
+	            AbstractLayoutPainter.HorizontalAlignment.LEFT,
+	            AbstractLayoutPainter.VerticalAlignment.TOP,
+	            false
+	        );
+        setSettings(newSettings);
+        // any change to textSettings need to use setSettings(), otherwise it will not be applied
+        commitSettings(oldSettings);
 	}
 	
 	/**

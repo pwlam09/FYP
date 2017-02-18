@@ -26,6 +26,7 @@ import org.opencv.imgproc.Imgproc;
 
 import manga.detect.Face;
 import manga.detect.Speaker;
+import manga.process.video.KeyFrame;
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 
@@ -34,8 +35,10 @@ import pixelitor.layers.ImageLayer;
  *
  */
 public class MangaPanelImage {
-	private long frameTimestamp;	// timestamp of the extracted frame
-	private Mat subImage;
+	private KeyFrame keyFrame;
+	private Rectangle2D panelBound;
+	private ArrayList<Face> faces;
+//	private Mat subImage;
 	private ImageLayer layer;	// the layer the image belong to
 	
 	private static int imgCount = 0;
@@ -44,14 +47,16 @@ public class MangaPanelImage {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public MangaPanelImage(Composition comp, Mat image, long frameTimestamp, Rectangle2D panelBound, ArrayList<Face> faces) {
-		this.frameTimestamp = frameTimestamp;
-		this.subImage = scaleAndCropSubImage(image, panelBound, faces);
+	public MangaPanelImage(Composition comp, KeyFrame keyFrame, Rectangle2D panelBound, ArrayList<Face> faces) {
+		this.keyFrame = keyFrame;
+//		this.subImage = scaleAndCropSubImage(keyFrame.getImg(), panelBound, faces);
+		this.panelBound = panelBound;
+		this.faces = faces;
 		this.layer = comp.addNewEmptyLayer("Image "+(++imgCount), false);
 	}
 	
 	public BufferedImage getSubImage() {
-		return Mat2BufferedImage(subImage);
+		return Mat2BufferedImage(scaleAndCropSubImage(keyFrame.getImg(), panelBound, faces));
 	}
 	
 	public ImageLayer getLayer() {
@@ -130,9 +135,11 @@ public class MangaPanelImage {
 				if (faceTopRightX>maxImgX) {
 					maxImgX = faceTopRightX;
 				}
-//				Imgproc.rectangle(scaledImg, new Point(face.getBound().x, face.getBound().y), 
-//						new Point(face.getBound().x+face.getBound().width, face.getBound().y+face.getBound().height), 
-//						new Scalar(0, 0, 255));
+				
+				// testing
+				Imgproc.rectangle(scaledImg, new Point(face.getBound().x, face.getBound().y), 
+						new Point(face.getBound().x+face.getBound().width, face.getBound().y+face.getBound().height), 
+						new Scalar(0, 0, 255));
 			}
 			
 			speakerCrop = new Rect(minImgX, 0, maxImgX-minImgX, scaledImg.height());
@@ -152,15 +159,16 @@ public class MangaPanelImage {
 		Rect cropRect = new Rect(newImgTopLeftX, newImgTopLeftY, (int) panelBound.getWidth(), (int) panelBound.getHeight());
 		Mat imgAfterCrop = scaledImg.submat(cropRect);
 		
-//		String filename = String.format("crop%d.jpg", imgCount);
-//		System.out.println(String.format("Writing %s", filename));
-//		Imgcodecs.imwrite(filename, imgAfterCrop);
+		// testing
+		String filename = String.format("crop%d.jpg", imgCount);
+		System.out.println(String.format("Writing %s", filename));
+		Imgcodecs.imwrite(filename, imgAfterCrop);
 		
 		return imgAfterCrop;
 	}
 	
-	public long getFrameTimestamp() {
-		return frameTimestamp;
+	public KeyFrame getKeyFrame() {
+		return keyFrame;
 	}
 	
 	/**

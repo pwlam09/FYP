@@ -32,7 +32,7 @@ public class VideoProcessor {
 	
 	// time base = 1^(-3)s
 	
-	private static ArrayList<FrameImage> frameImgs = new ArrayList<>(); 
+	private static ArrayList<KeyFrame> allKeyFrames = new ArrayList<>(); 
 	
 	private VideoProcessor() {
 		
@@ -42,7 +42,10 @@ public class VideoProcessor {
 		extractKeyFrameInfo(videoPath);
 		extractSRT(videoPath);
 		// store key frames for later use
-		frameImgs = extractKeyFrames(videoPath);
+		allKeyFrames = extractKeyFrames(videoPath);
+		for (KeyFrame keyFrame : allKeyFrames) {
+			System.out.println(keyFrame);
+		}
 	}
 	
 	private static boolean extractKeyFrameInfo(String videoPath) {
@@ -118,15 +121,15 @@ public class VideoProcessor {
 	}
 	
 	public static int getKeyFrameCount() {
-		return frameImgs.size();
+		return allKeyFrames.size();
 	}
 	
-	public static ArrayList<FrameImage> extractKeyFrames(String videoPath) {
+	public static ArrayList<KeyFrame> extractKeyFrames(String videoPath) {
 		File opencvDll = new File(VideoProcessor.class.getResource("/opencv/opencv_java310.dll").getFile());
 		String openCVPath = opencvDll.getAbsolutePath();
 		System.load(openCVPath);
 		
-		ArrayList<FrameImage> allFrameImgs = new ArrayList<>();
+		ArrayList<KeyFrame> allFrameImgs = new ArrayList<>();
 		VideoCapture vid = new VideoCapture(videoPath);
 		File clipShots = new File(getVideoDirPath(videoPath)+"/clip_shots.txt");
 		FileReader fr = null;
@@ -147,15 +150,15 @@ public class VideoProcessor {
 				} else {
 					vid.read(opencvImg);
 					if (opencvImg != null) {
-						long cShotTimestamp = (long) Math.floor(vid.get(Videoio.CAP_PROP_POS_MSEC));
+						double cShotTimestamp = vid.get(Videoio.CAP_PROP_POS_MSEC);
 						vid.set(Videoio.CAP_PROP_POS_FRAMES, Double.parseDouble(frameNumbers[0]));
-						long sShotTimestamp = (long) Math.floor(vid.get(Videoio.CAP_PROP_POS_MSEC));
+						double sShotTimestamp = vid.get(Videoio.CAP_PROP_POS_MSEC);
 						vid.set(Videoio.CAP_PROP_POS_FRAMES, Double.parseDouble(frameNumbers[1]));
-						long eShotTimestamp = (long) Math.floor(vid.get(Videoio.CAP_PROP_POS_MSEC));
+						double eShotTimestamp = vid.get(Videoio.CAP_PROP_POS_MSEC);
 //						System.out.println("stimestamp: "+sShotTimestamp+"");
 //						System.out.println("ctimestamp: "+cShotTimestamp+"");
 //						System.out.println("etimestamp: "+eShotTimestamp+"");
-						allFrameImgs.add(new FrameImage(opencvImg, cShotTimestamp, sShotTimestamp, eShotTimestamp));
+						allFrameImgs.add(new KeyFrame(opencvImg, cShotTimestamp, sShotTimestamp, eShotTimestamp));
 					}
 				}
 			}
@@ -172,9 +175,9 @@ public class VideoProcessor {
 	 * @param timestamp timestamp of current key frame
 	 * @return timestamp of next key frame
 	 */
-	public static long getNextKeyframeTimestamp(long timestamp) {
-		long nextTimestamp = 0L;
-		for (FrameImage aFrameImg: VideoProcessor.frameImgs) {
+	public static double getNextKeyframeTimestamp(double timestamp) {
+		double nextTimestamp = 0L;
+		for (KeyFrame aFrameImg: VideoProcessor.allKeyFrames) {
 			if (aFrameImg.getcShotTimestamp() > timestamp) {
 				nextTimestamp = aFrameImg.getcShotTimestamp();
 				break;
@@ -183,22 +186,22 @@ public class VideoProcessor {
 		return nextTimestamp;
 	}
 	
-	public static long getsShotTimestamp(long cShotTimestamp) {
-		for (FrameImage frameImg : VideoProcessor.frameImgs) {
+	public static double getsShotTimestamp(double cShotTimestamp) {
+		for (KeyFrame frameImg : VideoProcessor.allKeyFrames) {
 			if (frameImg.getcShotTimestamp() == cShotTimestamp) {
 				return frameImg.getsShotTimestamp();
 			}
 		}
-		return 0L;
+		return 0;
 	}
 
-	public static long geteShotTimestamp(long cShotTimestamp) {
-		for (FrameImage frameImg : VideoProcessor.frameImgs) {
+	public static double geteShotTimestamp(double cShotTimestamp) {
+		for (KeyFrame frameImg : VideoProcessor.allKeyFrames) {
 			if (frameImg.getcShotTimestamp() == cShotTimestamp) {
 				return frameImg.geteShotTimestamp();
 			}
 		}
-		return 0L;
+		return 0;
 	}
 	
 	private static String getVideoDirPath(String videoPath) {
@@ -212,8 +215,8 @@ public class VideoProcessor {
 		return filepath;
 	}
 
-	public static ArrayList<FrameImage> getKeyFrames() {
-		return frameImgs;
+	public static ArrayList<KeyFrame> getKeyFrames() {
+		return allKeyFrames;
 	}
 	
 	public static void detectSpeakersPosition(String videoPath) {
@@ -221,27 +224,28 @@ public class VideoProcessor {
 		String openCVPath = opencvDll.getAbsolutePath();
 		System.load(openCVPath);
 		
-		ArrayList<Subtitle> allSubtitle = SubtitleProcessor.getAllSubTextList();
+		ArrayList<Subtitle> allSubtitles = SubtitleProcessor.getAllSubtitles();
 		VideoCapture vid = new VideoCapture(videoPath);
 		int counter = 0;
 		Mat opencvImg = new Mat();
 		if (!vid.isOpened()) {
 			System.out.println("error open video");
 		} else {
-			for (Subtitle subtitle:allSubtitle) {
+			for (Subtitle subtitle:allSubtitles) {
 				ArrayList<Mat> interFrames = new ArrayList<>();
 				vid.set(Videoio.CAP_PROP_POS_MSEC, subtitle.geteTime());
 				double eFrame = vid.get(Videoio.CAP_PROP_POS_FRAMES);
 				vid.set(Videoio.CAP_PROP_POS_MSEC, subtitle.getsTime());
 				double sFrame = vid.get(Videoio.CAP_PROP_POS_FRAMES);
 				double frameInterval = (eFrame-sFrame) / 10;
-//				System.out.println("CAP_PROP_POS_FRAMES: "+vid.get(Videoio.CAP_PROP_POS_FRAMES));
-				while (Math.floor(vid.get(Videoio.CAP_PROP_POS_FRAMES))<=eFrame) {
+				System.out.println("CAP_PROP_POS_MSEC: "+vid.get(Videoio.CAP_PROP_POS_MSEC));
+				while (vid.get(Videoio.CAP_PROP_POS_FRAMES)<=eFrame) {
 					vid.read(opencvImg);
 					interFrames.add(opencvImg.clone());
 					vid.set(Videoio.CAP_PROP_POS_FRAMES, vid.get(Videoio.CAP_PROP_POS_FRAMES)+frameInterval);
-//					System.out.println("CAP_PROP_POS_FRAMES: "+vid.get(Videoio.CAP_PROP_POS_FRAMES));
 				}
+				System.out.printf("Detecting speaker face ... %d%%\n", 
+						(int) Math.floor(vid.get(Videoio.CAP_PROP_POS_FRAMES ) / vid.get(Videoio.CAP_PROP_FRAME_COUNT) * 100));
 				Face speakerFace = SpeakerDetector.detectSpeakerFace(interFrames);
 				if (speakerFace != null) {
 					Speaker speaker = new Speaker(speakerFace);
