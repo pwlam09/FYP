@@ -459,6 +459,18 @@ public class ShapesTool extends Tool {
     	strokeParam.setStrokeWidth(strokeWidth);
     }
     
+    /**
+     * @author PuiWa
+     * Must be called before drawing with new settings.
+     * Drawing status and stroke need to be cleared before next drawing, 
+     * otherwise new settings will not be applied and old settings are used.
+     * New values will be assigned in paint method. 
+     */
+    public void resetDrawingAndStroke() {
+    	drawing = false;
+    	stroke = null;
+    }
+    
     @Override
     public DebugNode getDebugNode() {
         DebugNode node = super.getDebugNode();

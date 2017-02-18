@@ -1,15 +1,9 @@
 package manga.element;
 
 import java.awt.Font;
-import java.awt.Panel;
-import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
-import java.util.concurrent.SynchronousQueue;
 
-import org.jdesktop.swingx.JXTipOfTheDay.ShowOnStartupChoice;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -17,15 +11,10 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import manga.detect.Face;
-import manga.detect.Speaker;
 import manga.process.subtitle.Subtitle;
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.KeyFrame;
-import manga.process.video.VideoProcessor;
 import pixelitor.Composition;
-import pixelitor.filters.painters.TextSettings;
-import pixelitor.filters.painters.TranslatedMangaTextPainter;
-import pixelitor.gui.ImageComponents;
 import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
 import pixelitor.layers.MangaText;
@@ -153,7 +142,9 @@ public class MangaPanel {
 	    	balloons.add(balloon);
 	    	
 			// initialize shapes tool for drawing balloon
-	        ShapesTool shapesTool = Tools.SHAPES;
+	    	ShapesTool shapesTool = Tools.SHAPES;
+	        // call reset method or the previous stroke will be used
+	        shapesTool.resetDrawingAndStroke();
 	        shapesTool.setShapeType(ShapeType.WORDBALLOON);
 	        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
 	        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);

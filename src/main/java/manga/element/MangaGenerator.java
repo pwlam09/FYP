@@ -146,6 +146,8 @@ public final class MangaGenerator {
 	        
 	        // intialize tools for drawing panels
 	        ShapesTool shapesTool = Tools.SHAPES;
+	        // call reset method or the previous stroke will be used
+	        shapesTool.resetDrawingAndStroke();
 	        shapesTool.setShapeType(ShapeType.RECTANGLE);
 	        shapesTool.setAction(ShapesAction.STROKE);
 	        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
