@@ -38,50 +38,76 @@ public class SpeakerDetector {
 	private static SpeakerDetector instance = new SpeakerDetector();
 	private static CascadeClassifier frontalFaceDetector;
 	private static CascadeClassifier profileFaceDetector;
+	private static CascadeClassifier eyesDetector;
+	private static CascadeClassifier leftEyeDetector;
+	private static CascadeClassifier rightEyeDetector;
 	private static CascadeClassifier mouthDetector;
 	
 	private SpeakerDetector() {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
-		frontalFaceDetector = new CascadeClassifier(SpeakerDetector.class.getResource("/opencv/haarcascade_frontalface_default.xml").getPath().substring(1));
-		profileFaceDetector = new CascadeClassifier(SpeakerDetector.class.getResource("/opencv/haarcascade_profileface.xml").getPath().substring(1));
-		mouthDetector = new CascadeClassifier(SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_mouth.xml").getPath().substring(1));
+		frontalFaceDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_frontalface_default.xml").getPath().substring(1));
+		profileFaceDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_profileface.xml").getPath().substring(1));
+		eyesDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_eye.xml").getPath().substring(1));
+		leftEyeDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_lefteye.xml").getPath().substring(1));
+		rightEyeDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_righteye.xml").getPath().substring(1));
+		mouthDetector = new CascadeClassifier(
+				SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_mouth.xml").getPath().substring(1));
 	}
 	
 	public static Face detectSpeakerFace(ArrayList<Mat> imgs) {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
 		ArrayList<Face> allFaces = new ArrayList<>();
-		MatOfRect faceDetections = new MatOfRect();
+		ArrayList<CascadeClassifier> faceCascadeClassfiers = new ArrayList<>();
+		faceCascadeClassfiers.add(frontalFaceDetector);
+		faceCascadeClassfiers.add(profileFaceDetector);
 		
 		subtitleCounter++;
 		
 		for (int i=0; i<imgs.size(); i++) {
-			Mat grayImg = new Mat();
-			Imgproc.cvtColor(imgs.get(i), grayImg, Imgproc.COLOR_BGR2GRAY);
-			Imgproc.equalizeHist(grayImg, grayImg);
-			if (absoluteFaceSize == 0)
-			{
-			    int height = grayImg.rows();
-			    if (Math.round(height * 0.2f) > 0)
-			    {
-		            absoluteFaceSize = Math.round(height * 0.2f);
-			    }
+			// detect both frontal face and profile face from each image
+			for (CascadeClassifier faceCascadeClassfier : faceCascadeClassfiers) {
+				MatOfRect faceDetections = new MatOfRect();
+				Mat grayImg = new Mat();
+				Imgproc.cvtColor(imgs.get(i), grayImg, Imgproc.COLOR_BGR2GRAY);
+				Imgproc.equalizeHist(grayImg, grayImg);
+				if (absoluteFaceSize == 0)
+				{
+				    int height = grayImg.rows();
+				    if (Math.round(height * 0.2f) > 0)
+				    {
+			            absoluteFaceSize = Math.round(height * 0.2f);
+				    }
+				}
+				faceCascadeClassfier.detectMultiScale(grayImg, faceDetections, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+		        		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
+//		        System.out.println("face array size: "+faceDetections.toArray().length);
+		        for (Rect faceRect : faceDetections.toArray()) {
+		        	Face face = null;
+		        	Rect detectedMouthBound = detectMouth(grayImg, faceRect);
+		        	if (detectedMouthBound == null) {
+		        		face = new Face(i, imgs.get(i), faceRect, null);
+		        	} else {
+		        		face = new Face(i, imgs.get(i), faceRect, new Mouth(detectedMouthBound));
+		        	}
+		        	if (faceCascadeClassfier.equals(frontalFaceDetector)) {
+		        		// discard false positive
+		        		if (frontalFaceHasEyes(grayImg, faceRect)) {
+						    allFaces.add(face);
+		        		}
+		        	} else {
+		        		// not checking for profile face eyes as it is not very accurate
+//		        		if (profileFaceHasEye(grayImg, faceRect)) {
+						    allFaces.add(face);
+//		        		}
+					}
+		        }
 			}
-	        frontalFaceDetector.detectMultiScale(grayImg, faceDetections, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
-	        		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
-	        profileFaceDetector.detectMultiScale(grayImg, faceDetections, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
-	        		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
-//	        System.out.println("face array size: "+faceDetections.toArray().length);
-	        for (Rect faceRect : faceDetections.toArray()) {
-	        	Face face = null;
-	        	Rect detectedMouthBound = detectMouth(imgs.get(i), faceRect);
-	        	if (detectedMouthBound == null) {
-	        		face = new Face(imgs.get(i), faceRect, null);
-	        	} else {
-	        		face = new Face(imgs.get(i), faceRect, new Mouth(detectedMouthBound));
-	        	}
-			    allFaces.add(face);
-	        }
 		}
 		
 		Face speakerFace = getSpeakerFace(groupPossibleFaces(allFaces));
@@ -101,7 +127,7 @@ public class SpeakerDetector {
 		
 		return speakerFace;
 	}
-	
+
 	private static HashMap<Face, ArrayList<Face>> groupPossibleFaces(ArrayList<Face> allFaces) {
 		HashMap<Face, ArrayList<Face>> faceMap = new HashMap<>();
         
@@ -116,11 +142,18 @@ public class SpeakerDetector {
 						Rectangle faceToGroup = new Rectangle(detectedFaces.get(j).getBound().x, detectedFaces.get(j).getBound().y, 
 								detectedFaces.get(j).getBound().width, detectedFaces.get(j).getBound().height);
 						Rectangle faceIntersection = keyface.intersection(faceToGroup);
-						if (faceIntersection.width * faceIntersection.height >= keyface.width * keyface.height * 0.8) {
+						if ((faceIntersection.width * faceIntersection.height >= keyface.width * keyface.height * 0.8)) {
+							// check if the grouped faces are in consecutive frames
 							ArrayList<Face> faceGroup = faceMap.get(detectedFaces.get(i));
-							faceGroup.add(detectedFaces.get(j));
-							faceMap.put(detectedFaces.get(i), faceGroup);
-						}
+							Face faceToCompare = detectedFaces.get(i);
+							if (faceGroup.size() > 0) {
+								faceToCompare = faceGroup.get(faceGroup.size()-1);
+							}
+							if (detectedFaces.get(j).follows(faceToCompare)) {
+								faceGroup.add(detectedFaces.get(j));
+								faceMap.put(detectedFaces.get(i), faceGroup);
+							}
+						}	
 					}
 				}
 			}
@@ -140,15 +173,22 @@ public class SpeakerDetector {
 		return false;
 	}
 	
-	private static Mouth getMouthInGroupedFaces(ArrayList<Face> groupedFaces) {
+	private static boolean isMouthInGroupedFaces(ArrayList<Face> groupedFaces) {
 		for (Face face:groupedFaces) {
 			if (face.getMouth() != null) {
-				return face.getMouth();
+				return true;
 			}
 		}
-		return null;
+		return false;
 	}
 	
+	/**
+	 * Get biggest face with mouth region detected as speaker,
+	 * If no mouth region, get biggest detected face
+	 * 
+	 * @param faceMap
+	 * @return
+	 */
 	private static Face getSpeakerFace(HashMap<Face, ArrayList<Face>> faceMap) {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
@@ -159,7 +199,7 @@ public class SpeakerDetector {
 			ArrayList<Face> groupedFaces = entry.getValue();
 			
 			// if no mouth detected
-			if (keyFace.getMouth() == null && getMouthInGroupedFaces(groupedFaces) == null) {
+			if (keyFace.getMouth() == null && !isMouthInGroupedFaces(groupedFaces)) {
 				selectedFace = keyFace;
 				for (Face face : groupedFaces) {
 					if (face.getBound().area() > maxFaceArea) {
@@ -173,7 +213,7 @@ public class SpeakerDetector {
 				selectedFace = keyFace;
 				maxFaceArea = keyFace.getBound().area();
 			}
-			if (getMouthInGroupedFaces(groupedFaces) != null) {
+			if (isMouthInGroupedFaces(groupedFaces)) {
 				for (Face face : groupedFaces) {
 					if (face.getMouth() != null && face.getBound().area() > maxFaceArea) {
 						selectedFace = face;
@@ -243,11 +283,114 @@ public class SpeakerDetector {
 //		return null;
 	}
 	
+	private static boolean frontalFaceHasEyes(Mat img, Rect faceRect) {
+		Rectangle upperface = new Rectangle(faceRect.x, faceRect.y, faceRect.width, faceRect.height/2);
+		
+		MatOfRect eyesDetections = new MatOfRect();
+		eyesDetector.detectMultiScale(img, eyesDetections);
+		
+        for (Rect eyesRect : eyesDetections.toArray()) {
+        	Rectangle2D eyesConvertedRect = new Rectangle2D.Double(eyesRect.x, eyesRect.y, eyesRect.width, eyesRect.height);
+        	Rectangle2D faceEyesIntersection = eyesConvertedRect.createIntersection(upperface);
+        	if (faceEyesIntersection.getWidth() * faceEyesIntersection.getHeight() >= eyesConvertedRect.getWidth() * eyesConvertedRect.getHeight() * 0.8) {
+        		return true;
+        	}
+        }
+        
+		return false;
+	}
+
+	private static boolean profileFaceHasEye(Mat img, Rect faceRect) {
+		Rectangle upperFaceLeft = new Rectangle(faceRect.x, faceRect.y, faceRect.width/2, faceRect.height/2);
+		Rectangle upperFaceRight = new Rectangle(faceRect.x+faceRect.width/2, faceRect.y, faceRect.width/2, faceRect.height/2);
+		
+		ArrayList<CascadeClassifier> eyeCascadeClassfiers = new ArrayList<>();
+		eyeCascadeClassfiers.add(leftEyeDetector);
+		eyeCascadeClassfiers.add(rightEyeDetector);
+		
+		// detect both frontal face and profile face from each image
+		for (CascadeClassifier eyeCascadeClassfier : eyeCascadeClassfiers) {
+			MatOfRect eyeDetections = new MatOfRect();
+			eyeCascadeClassfier.detectMultiScale(img, eyeDetections);
+			Rectangle2D faceEyeIntersection = null;
+	        for (Rect eyeRect : eyeDetections.toArray()) {
+	        	Rectangle2D eyeConvertedRect = new Rectangle2D.Double(eyeRect.x, eyeRect.y, eyeRect.width, eyeRect.height);
+	        	if (eyeCascadeClassfier.equals(leftEyeDetector)) {
+		        	faceEyeIntersection = eyeConvertedRect.createIntersection(upperFaceLeft);
+	        	} else {
+	        		faceEyeIntersection = eyeConvertedRect.createIntersection(upperFaceRight);
+	        	}
+	        	if (faceEyeIntersection.getWidth() * faceEyeIntersection.getHeight() >= eyeConvertedRect.getWidth() * eyeConvertedRect.getHeight() * 0.8) {
+	        		return true;
+	        	}
+	        }
+		}
+    
+		return false;
+	}
+	
+	public static ArrayList<Face> detectFaces(Mat img) {
+		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
+		
+		ArrayList<Face> allFaces = new ArrayList<>();
+		ArrayList<CascadeClassifier> faceCascadeClassfiers = new ArrayList<>();
+		faceCascadeClassfiers.add(frontalFaceDetector);
+		faceCascadeClassfiers.add(profileFaceDetector);
+
+		// detect both frontal face and profile face from each image
+		for (CascadeClassifier faceCascadeClassfier : faceCascadeClassfiers) {
+			MatOfRect faceDetections = new MatOfRect();
+			Mat grayImg = new Mat();
+			Imgproc.cvtColor(img, grayImg, Imgproc.COLOR_BGR2GRAY);
+			Imgproc.equalizeHist(grayImg, grayImg);
+			if (absoluteFaceSize == 0)
+			{
+			    int height = grayImg.rows();
+			    if (Math.round(height * 0.2f) > 0)
+			    {
+		            absoluteFaceSize = Math.round(height * 0.2f);
+			    }
+			}
+			faceCascadeClassfier.detectMultiScale(grayImg, faceDetections, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
+	        		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
+	        for (Rect faceRect : faceDetections.toArray()) {
+	        	Face face = null;
+	        	Rect detectedMouthBound = detectMouth(grayImg, faceRect);
+	        	// set framIndex to -1, not functional here, change?
+	        	if (detectedMouthBound == null) {
+	        		face = new Face(-1, img, faceRect, null);
+	        	} else {
+	        		face = new Face(-1, img, faceRect, new Mouth(detectedMouthBound));
+	        	}
+	        	if (faceCascadeClassfier.equals(frontalFaceDetector)) {
+	        		// discard false positive
+	        		if (frontalFaceHasEyes(grayImg, faceRect)) {
+					    allFaces.add(face);
+	        		}
+	        	} else {
+	        		// not checking for profile face eyes as it is not very accurate
+//		        		if (profileFaceHasEye(grayImg, faceRect)) {
+					    allFaces.add(face);
+//		        		}
+				}
+	        }
+		}
+		
+		return allFaces;
+	}
+	
+	/**
+	 * For frontal face only
+	 * @param img
+	 * @param faceRect
+	 * @return
+	 */
 	private static Rect detectMouth(Mat img, Rect faceRect) {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
         MatOfRect mouthDetections = new MatOfRect();
-        mouthDetector.detectMultiScale(img, mouthDetections);
+        Mat roi = img.submat(faceRect);
+        mouthDetector.detectMultiScale(roi, mouthDetections);
 
 		Rectangle upperface = new Rectangle(faceRect.x, faceRect.y, faceRect.width, faceRect.height/2);
 		Rectangle lowerface = new Rectangle(faceRect.x, faceRect.y+faceRect.height/2, faceRect.width, faceRect.height/2);
@@ -303,5 +446,4 @@ public class SpeakerDetector {
 			System.out.println("No. of grouped faces: "+groupedFaces.size());
 		}
 	}
-	
 }

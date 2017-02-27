@@ -110,6 +110,9 @@ public class SubtitleProcessor {
 		return subtitleText;
 	}
 	
+	/**
+	 * for testing
+	 */
 	public static void printAllSubtitles() {
 		for (Subtitle subtitle : allSubtitles) {
 			System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());

@@ -35,11 +35,16 @@ import pixelitor.layers.ImageLayer;
  *
  */
 public class MangaPanelImage {
-	private KeyFrame keyFrame;
+	private Mat keyFrameImg;
 	private Rectangle2D panelBound;
-	private ArrayList<Face> faces;
-//	private Mat subImage;
+	private ArrayList<Face> detectedFaces;
+	private double scaleRatio;
+	private ArrayList<Face> relocatedFaces;
+	private BufferedImage subImageAsBufferedImage;
+	private Mat subImageAsMat;
 	private ImageLayer layer;	// the layer the image belong to
+	private int cropStartX;
+	private int cropStartY;
 	
 	private static int imgCount = 0;
 
@@ -47,18 +52,32 @@ public class MangaPanelImage {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public MangaPanelImage(Composition comp, KeyFrame keyFrame, Rectangle2D panelBound, ArrayList<Face> faces) {
-		this.keyFrame = keyFrame;
-//		this.subImage = scaleAndCropSubImage(keyFrame.getImg(), panelBound, faces);
+	public MangaPanelImage(Composition comp, Mat keyFrameImg, Rectangle2D panelBound, ArrayList<Face> detectedFaces) {
+		this.keyFrameImg = keyFrameImg;
 		this.panelBound = panelBound;
-		this.faces = faces;
+		this.detectedFaces = detectedFaces;
+		this.relocatedFaces = new ArrayList<>();
 		this.layer = comp.addNewEmptyLayer("Image "+(++imgCount), false);
 	}
 	
-	public BufferedImage getSubImage() {
-		return Mat2BufferedImage(scaleAndCropSubImage(keyFrame.getImg(), panelBound, faces));
+	public BufferedImage getSubImageAsBufferedImage() {
+		if (subImageAsBufferedImage == null) {
+			subImageAsBufferedImage = Mat2BufferedImage(getSubImgAsMat());
+		}
+		return subImageAsBufferedImage;
 	}
 	
+	public Mat getSubImgAsMat() {
+		if (subImageAsMat == null) {
+			subImageAsMat = scaleAndCropSubImage(keyFrameImg, panelBound, detectedFaces);
+		}
+		return subImageAsMat;
+	}
+	
+	public ArrayList<Face> getRelocatedFaces() {
+		return relocatedFaces;
+	}
+
 	public ImageLayer getLayer() {
 		return layer;
 	}
@@ -70,10 +89,10 @@ public class MangaPanelImage {
 	 * @param panelBound
 	 * @return image after scale and crop
 	 */
-	private Mat scaleAndCropSubImage(Mat image, Rectangle2D panelBound, ArrayList<Face> faces) {
+	private Mat scaleAndCropSubImage(Mat image, Rectangle2D panelBound, ArrayList<Face> detectedFaces) {
 		Mat processedImg = scaleImage(image, panelBound);
-		double ratio = (double) processedImg.width() / (double) image.width();
-		processedImg = cropImage(processedImg, ratio, panelBound, faces); 
+		scaleRatio = (double) processedImg.width() / (double) image.width();
+		processedImg = cropImage(processedImg, scaleRatio, panelBound, detectedFaces); 
 		return processedImg;
 	}
 	
@@ -106,6 +125,7 @@ public class MangaPanelImage {
 	 * @return cropped image
 	 */
 	private Mat cropImage(Mat scaledImg, double ratio, Rectangle2D panelBound, ArrayList<Face> faces) {
+		// resize detected faces with aspect ratio
 		ArrayList<Face> resizedFaces = new ArrayList<>();
 		for (Face face : faces) {
 			resizedFaces.add(new Face(face, ratio));
@@ -135,11 +155,6 @@ public class MangaPanelImage {
 				if (faceTopRightX>maxImgX) {
 					maxImgX = faceTopRightX;
 				}
-				
-				// testing
-				Imgproc.rectangle(scaledImg, new Point(face.getBound().x, face.getBound().y), 
-						new Point(face.getBound().x+face.getBound().width, face.getBound().y+face.getBound().height), 
-						new Scalar(0, 0, 255));
 			}
 			
 			speakerCrop = new Rect(minImgX, 0, maxImgX-minImgX, scaledImg.height());
@@ -157,18 +172,36 @@ public class MangaPanelImage {
 		}
 		
 		Rect cropRect = new Rect(newImgTopLeftX, newImgTopLeftY, (int) panelBound.getWidth(), (int) panelBound.getHeight());
+		
+		// assign top-left coordinates of the region to crop for relocating faces
+		this.cropStartX = newImgTopLeftX;
+		this.cropStartY = newImgTopLeftY;
+		relocateFaces(resizedFaces);
+		
 		Mat imgAfterCrop = scaledImg.submat(cropRect);
 		
 		// testing
-		String filename = String.format("crop%d.jpg", imgCount);
-		System.out.println(String.format("Writing %s", filename));
-		Imgcodecs.imwrite(filename, imgAfterCrop);
+//		String filename = String.format("crop%d.jpg", imgCount);
+//		System.out.println(String.format("Writing %s", filename));
+//		Imgcodecs.imwrite(filename, imgAfterCrop);
 		
 		return imgAfterCrop;
 	}
 	
-	public KeyFrame getKeyFrame() {
-		return keyFrame;
+	/**
+	 * update coordinates of rescaled faces,
+	 * according to scale ratio and position 
+	 * of cropped region relative to the whole image
+	 * @param resizedFaces
+	 */
+	private void relocateFaces(ArrayList<Face> resizedFaces) {
+		if (resizedFaces.size() > 0) {
+			for (Face resizedFace : resizedFaces) {
+				Rect currFaceBound = resizedFace.getBound();
+				Face relocatedFace = new Face(resizedFace, currFaceBound.x-cropStartX, currFaceBound.y-cropStartY);
+				relocatedFaces.add(relocatedFace);
+			}
+		}
 	}
 	
 	/**
@@ -190,5 +223,13 @@ public class MangaPanelImage {
 		final byte[] targetPixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
 		System.arraycopy(b, 0, targetPixels, 0, b.length);  
 		return image;
+	}
+
+	public Face relocateFace(Face face) {
+		// scale face to panel-to-image ratio
+		Face scaledFace = new Face(face, scaleRatio);
+		// update coordinates with respect to the cropped region relative to the whole image
+		Face relocatedFace = new Face(scaledFace, scaledFace.getBound().x-cropStartX, scaledFace.getBound().y-cropStartY);
+		return relocatedFace;
 	}
 }

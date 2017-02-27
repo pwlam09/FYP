@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.Character.Subset;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
 
@@ -76,20 +77,21 @@ public class VideoProcessor {
 	}
 	
 	/**
-	 * Check if clip_shots.txt is in the same directory of video
+	 * Check if <video name>_shots.txt is in the same directory of video
 	 */
 	private static boolean requiredDocsExist(String videoPath) {
 		String clipShotsFilePath = null;
-		if (videoPath.lastIndexOf("/") != -1) {
-			clipShotsFilePath = videoPath.substring(0, videoPath.lastIndexOf("/"))+"/clip_shots.txt";
-		} else {
-			clipShotsFilePath = videoPath.substring(0, videoPath.lastIndexOf("\\"))+"/clip_shots.txt";
+		if (videoPath.lastIndexOf(".") != -1) {
+			clipShotsFilePath = videoPath.substring(0, videoPath.lastIndexOf("."))+"_shots.txt";
 		}
 		File videoShotFile = new File(clipShotsFilePath);
 		if (videoShotFile.exists()) {
+			System.out.println("Key frame information exists!");
 			return true;
+		} else {
+			System.out.println("Key frame information not available!");
+			return false;
 		}
-		return false;
 	}
 
 	/**
@@ -131,7 +133,7 @@ public class VideoProcessor {
 		
 		ArrayList<KeyFrame> allFrameImgs = new ArrayList<>();
 		VideoCapture vid = new VideoCapture(videoPath);
-		File clipShots = new File(getVideoDirPath(videoPath)+"/clip_shots.txt");
+		File clipShots = new File(getVideoShotFilePath(videoPath));
 		FileReader fr = null;
 		try {
 			fr = new FileReader(clipShots);
@@ -169,49 +171,8 @@ public class VideoProcessor {
 		return allFrameImgs;
 	}
 	
-	/**
-	 * Return timestamp of next key frame based on the timestamp provided.
-	 * Return timestamp of last frame if it is the end of video. 
-	 * @param timestamp timestamp of current key frame
-	 * @return timestamp of next key frame
-	 */
-	public static double getNextKeyframeTimestamp(double timestamp) {
-		double nextTimestamp = 0L;
-		for (KeyFrame aFrameImg: VideoProcessor.allKeyFrames) {
-			if (aFrameImg.getcShotTimestamp() > timestamp) {
-				nextTimestamp = aFrameImg.getcShotTimestamp();
-				break;
-			}
-		}
-		return nextTimestamp;
-	}
-	
-	public static double getsShotTimestamp(double cShotTimestamp) {
-		for (KeyFrame frameImg : VideoProcessor.allKeyFrames) {
-			if (frameImg.getcShotTimestamp() == cShotTimestamp) {
-				return frameImg.getsShotTimestamp();
-			}
-		}
-		return 0;
-	}
-
-	public static double geteShotTimestamp(double cShotTimestamp) {
-		for (KeyFrame frameImg : VideoProcessor.allKeyFrames) {
-			if (frameImg.getcShotTimestamp() == cShotTimestamp) {
-				return frameImg.geteShotTimestamp();
-			}
-		}
-		return 0;
-	}
-	
-	private static String getVideoDirPath(String videoPath) {
-		int eIndex = -1;
-		if (videoPath.lastIndexOf('/') != -1) {
-			eIndex = videoPath.lastIndexOf('/');
-		} else {
-			eIndex = videoPath.lastIndexOf('\\');
-		}
-		String filepath = videoPath.substring(0, eIndex);
+	private static String getVideoShotFilePath(String videoPath) {
+		String filepath = videoPath.substring(0, videoPath.lastIndexOf("."))+"_shots.txt";
 		return filepath;
 	}
 
@@ -241,6 +202,10 @@ public class VideoProcessor {
 				System.out.println("CAP_PROP_POS_MSEC: "+vid.get(Videoio.CAP_PROP_POS_MSEC));
 				while (vid.get(Videoio.CAP_PROP_POS_FRAMES)<=eFrame) {
 					vid.read(opencvImg);
+					// subtitle end time may exceed end of video
+					if (opencvImg.empty()) {
+						break;
+					}
 					interFrames.add(opencvImg.clone());
 					vid.set(Videoio.CAP_PROP_POS_FRAMES, vid.get(Videoio.CAP_PROP_POS_FRAMES)+frameInterval);
 				}
@@ -249,9 +214,10 @@ public class VideoProcessor {
 				Face speakerFace = SpeakerDetector.detectSpeakerFace(interFrames);
 				if (speakerFace != null) {
 					Speaker speaker = new Speaker(speakerFace);
-//					System.out.println("speaker detected");
+					System.out.println("speaker detected");
 					subtitle.setSpeaker(speaker);
 				} else {
+					System.out.println("no speaker");
 					subtitle.setSpeaker(null);
 				}
 			}

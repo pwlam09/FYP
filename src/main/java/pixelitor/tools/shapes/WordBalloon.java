@@ -6,12 +6,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
-import org.mockito.Matchers;
 
 /**
  * @author PuiWa
@@ -80,15 +78,21 @@ public class WordBalloon implements Shape {
 		double a = ellipse.getWidth() / 2;
 		double b = ellipse.getHeight() / 2;
 		
-		double textBoundX = ((a * b) / 
-				Math.sqrt(Math.pow(a, 2) * Math.pow(ellipse.getY()-ellipseCentreY, 2) + Math.pow(b, 2) * Math.pow(ellipse.getX()-ellipseCentreX, 2))) * 
-				(ellipse.getX()-ellipseCentreX) + ellipseCentreX;
-		double textBoundY = ((a * b) / 
-				Math.sqrt(Math.pow(a, 2) * Math.pow(ellipse.getY()-ellipseCentreY, 2) + Math.pow(b, 2) * Math.pow(ellipse.getX()-ellipseCentreX, 2))) * 
-				(ellipse.getY()-ellipseCentreY) + ellipseCentreY;
+//		double textBoundX = ((a * b) / 
+//				Math.sqrt(Math.pow(a, 2) * Math.pow(ellipse.getY()-ellipseCentreY, 2) + Math.pow(b, 2) * Math.pow(ellipse.getX()-ellipseCentreX, 2))) * 
+//				(ellipse.getX()-ellipseCentreX) + ellipseCentreX;
+//		double textBoundY = ((a * b) / 
+//				Math.sqrt(Math.pow(a, 2) * Math.pow(ellipse.getY()-ellipseCentreY, 2) + Math.pow(b, 2) * Math.pow(ellipse.getX()-ellipseCentreX, 2))) * 
+//				(ellipse.getY()-ellipseCentreY) + ellipseCentreY;
 		
-		double textBoundWidth = (textBoundX-ellipseCentreX) * 2;
-		double textBoundHeight = (textBoundY-ellipseCentreY) * 2;
+		double textBoundX = -a * Math.sqrt(2) / 2 + ellipseCentreX;
+		double textBoundY = -b * Math.sqrt(2)/2 + ellipseCentreY;
+		
+//		double textBoundWidth = (textBoundX-ellipseCentreX) * 2;
+//		double textBoundHeight = (textBoundY-ellipseCentreY) * 2;
+		
+		double textBoundWidth = a * Math.sqrt(2) / 2 * 2;
+		double textBoundHeight = b * Math.sqrt(2) / 2 * 2;
 		
 		textBound = new Rectangle2D.Double(textBoundX, textBoundY, Math.abs(textBoundWidth), Math.abs(textBoundHeight));
 	}

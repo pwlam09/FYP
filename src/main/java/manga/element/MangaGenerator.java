@@ -40,7 +40,7 @@ import manga.process.video.VideoProcessor;
  */
 
 public final class MangaGenerator {
-	private static ArrayList<MangaPage> pageList=new ArrayList<>();
+	private static ArrayList<MangaPage> pages=new ArrayList<>();
 	private static int keyFrameCount = 0;
 	private static int numOfPanelsPerPage = 6;
 	private static double currTimestamp = 0;
@@ -56,7 +56,7 @@ public final class MangaGenerator {
 		VideoProcessor.preprocessing(videoPath);
 		// parse the extracted subtitle file and store subtitle text and related timestamps
 		SubtitleProcessor.parseSRT();
-		SubtitleProcessor.printAllSubtitles();
+		SubtitleProcessor.printAllSubtitles();	// testing
 		VideoProcessor.detectSpeakersPosition(videoPath);
 	}
 	
@@ -73,11 +73,11 @@ public final class MangaGenerator {
 		int pageNum = keyFrameCount / numOfPanelsPerPage;
 		for (int i = 0; i<pageNum; i++) {
 			MangaPage page = new MangaPage();
-			pageList.add(page);
+			pages.add(page);
 		}
 		if (keyFrameCount % numOfPanelsPerPage != 0) {
 			MangaPage page = new MangaPage();
-			pageList.add(page);
+			pages.add(page);
 		}
 //		MangaPage page = new MangaPage();
 //		pageList.add(page);
@@ -85,7 +85,7 @@ public final class MangaGenerator {
 	
 	public static MangaPage getActivePage() {
 		Composition comp = ImageComponents.getActiveCompOrNull();
-		for (MangaPage p: pageList) {
+		for (MangaPage p: pages) {
 			if (p.getComp().equals(comp)) {
 				return p;
 			}
@@ -111,7 +111,20 @@ public final class MangaGenerator {
 	 */
 	public static void setActiveComp(int i) {
 		List<ImageComponent> icList = ImageComponents.getICList();
-		Composition selectedComp = pageList.get(i).getComp();
+		Composition selectedComp = pages.get(i).getComp();
+        for (ImageComponent ic : icList) {
+        	if (ic.getComp() == selectedComp) {
+        		ImageComponents.setActiveIC(ic, true);
+        	}
+        }
+	}	
+	
+	/**
+	 * Set active internal frame (i.e. MangaPage composition)
+	 */
+	public static void setActiveComp(MangaPage page) {
+		List<ImageComponent> icList = ImageComponents.getICList();
+		Composition selectedComp = page.getComp();
         for (ImageComponent ic : icList) {
         	if (ic.getComp() == selectedComp) {
         		ImageComponents.setActiveIC(ic, true);
@@ -124,7 +137,7 @@ public final class MangaGenerator {
 	 * Draw 6 manga panels on different MangaPanel layers
 	 */
 	public static void drawMangaPanels() {
-		for (MangaPage page: pageList) {
+		for (MangaPage page: pages) {
 
 			// 6 panels at most for a page?
 			// 1 key frame = 1 panel
@@ -177,7 +190,7 @@ public final class MangaGenerator {
 	 * Draw word balloon on layer, similar to drawing panel.
 	 */
 	public static void drawWordBalloons() {
-		for (MangaPage page: pageList) {
+		for (MangaPage page: pages) {
 			for (MangaPanel panel: page.getPanels()) {
 				panel.addMangaBalloons();
 			}
@@ -190,11 +203,13 @@ public final class MangaGenerator {
 	public static void drawImgsToPanel() {
 		ArrayList<KeyFrame> extractedFrameImgs = VideoProcessor.getKeyFrames();
 		int frameImgCounter = 0;
-        for (int i = 0; i<pageList.size(); i++) {
-        	MangaPage currentPage = pageList.get(i);
+        for (int i = 0; i<pages.size(); i++) {
+        	MangaPage currentPage = pages.get(i);
     		for (int j = 0; j<currentPage.getPanels().size(); j++) {
             	MangaPanel panel = currentPage.getPanels().get(j);
-            	panel.fitImageToPanelBound(extractedFrameImgs.get(frameImgCounter++));
+            	KeyFrame keyFrame = extractedFrameImgs.get(frameImgCounter++);
+            	panel.setKeyFrame(keyFrame);
+            	panel.fitImageToPanelBound();
             }
         }
 	}
@@ -204,8 +219,8 @@ public final class MangaGenerator {
 	 * Otherwise they will be occluded by other layers
 	 */
 	public static void pushBalloonsAndTextToTop() {
-        for (int i = 0; i<pageList.size(); i++) {
-        	MangaPage currentPage = pageList.get(i);
+        for (int i = 0; i<pages.size(); i++) {
+        	MangaPage currentPage = pages.get(i);
         	// the active index of the top (latest created) layer
 			int activeLayerIndex = currentPage.getComp().getActiveLayerIndex();
 			for (MangaPanel panel: currentPage.getPanels()) {
@@ -217,5 +232,9 @@ public final class MangaGenerator {
 				}
 			}
 		}
+	}
+	
+	public static ArrayList<MangaPage> getMangaPages() {
+		return pages;
 	}
 }

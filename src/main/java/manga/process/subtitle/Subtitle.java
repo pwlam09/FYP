@@ -1,8 +1,8 @@
 package manga.process.subtitle;
 
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 
 import manga.detect.Speaker;
@@ -60,5 +60,34 @@ public class Subtitle {
 			linkedSubtitlesText = linkedSubtitlesText + subtitle.text +" ";
 		}
 		return linkedSubtitlesText;
+	}
+	
+	/**
+	 * if the speaker faces of the two subtitle overlap >= 80% (based on the smaller face area),
+	 * it will be considered as same speaker
+	 *  
+	 * @param subtitle
+	 * @return
+	 */
+	public boolean hasSameSpeaker(Subtitle subtitle) {
+		if (this.speaker == null || subtitle.speaker == null) {
+			return false;
+		}
+		Rect speaker1FaceBound = this.speaker.getFace().getBound();
+		Rect speaker2FaceBound = subtitle.speaker.getFace().getBound();
+		Rectangle2D convertedRect1 = new Rectangle2D.Double(speaker1FaceBound.x, speaker1FaceBound.y, speaker1FaceBound.width, speaker1FaceBound.height);
+		Rectangle2D convertedRect2 = new Rectangle2D.Double(speaker2FaceBound.x, speaker2FaceBound.y, speaker2FaceBound.width, speaker2FaceBound.height);
+		Rectangle2D facesIntersection = convertedRect1.createIntersection(convertedRect2);
+		double areaToCompare = 0.0;
+		if (speaker1FaceBound.area() < speaker2FaceBound.area()) {
+			areaToCompare = speaker1FaceBound.area();
+		} else {
+			areaToCompare = speaker2FaceBound.area();
+		}
+		if (facesIntersection.getWidth() * facesIntersection.getHeight() >= areaToCompare * 0.8) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

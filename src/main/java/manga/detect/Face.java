@@ -5,20 +5,31 @@ import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
-import pixelitor.filters.comp.Resize;
 
+/**
+ * @author PuiWa
+ *
+ */
 public class Face {
+	private int frameIndex;
 	private Mat img;
 	private Rect bound;
 	private Mouth mouth;
 	
-	public Face(Mat img, Rect bound, Mouth mouth) {
+	public Face(int frameIndex, Mat img, Rect bound, Mouth mouth) {
+		this.frameIndex = frameIndex;
 		this.img = img;
 		this.bound = bound;
 		this.mouth = mouth;
 	}
 
+	/**
+	 * For re-scaling face
+	 * @param face
+	 * @param ratio
+	 */
 	public Face(Face face, double ratio) {
+		this.frameIndex = face.frameIndex;
 		Mat resizedImg = new Mat();
 		Size sz = new Size(face.img.width()*ratio, face.img.height()*ratio);
 		Imgproc.resize(face.img, resizedImg, sz);
@@ -29,6 +40,18 @@ public class Face {
 		} else {
 			this.mouth = null;
 		}
+	}
+	
+	/**
+	 * For setting new bound top-left coordinates
+	 * @param face
+	 * @param newBound
+	 */
+	public Face(Face face, double x, double y) {
+		this.frameIndex = face.frameIndex;
+		this.img = face.img;
+		this.bound = new Rect((int) x, (int) y, face.bound.width, face.bound.height);
+		this.mouth = face.mouth;
 	}
 
 	public Mouth getMouth() {
@@ -43,6 +66,18 @@ public class Face {
 		return bound;
 	}
 
+	/**
+	 * @param face face with smaller frame index
+	 * @return whether the face follows another
+	 */
+	public boolean follows(Face face) {
+		// if in consecutive frames, the frame index should be varied by 1
+		if (this.frameIndex-face.frameIndex == 1) {
+			return true;
+		}
+		return false;
+	}
+	
 	@Override
 	public String toString() {
 		return "Face [img=" + img + ", bound=" + bound + ", mouth=" + mouth + "]";

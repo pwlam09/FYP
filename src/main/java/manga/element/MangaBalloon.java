@@ -39,14 +39,18 @@ public class MangaBalloon {
 	private ImageLayer balloonLayer;	// layer of balloon drawing
 	private WordBalloon balloonRef;	// balloon object reference
 	
-	private static int balloonNum = 0;
+	private int balloonNum;
+	
+	private static int totalBalloonNum = 0;
 	private static int textNum = 0;
 
 	public MangaBalloon(MangaPanel panel, MangaText mangaTextLayer, WordBalloon balloonRef) {
 		this.panel = panel;
 		
-		balloonNum++;
-		this.balloonLayer = panel.getPage().getComp().addNewEmptyLayer("Balloon "+balloonNum, false);
+		totalBalloonNum++;
+		this.balloonLayer = panel.getPage().getComp().addNewEmptyLayer("Balloon "+totalBalloonNum, false);
+		
+		balloonNum = totalBalloonNum;
 
 		// MangaText extends TextLayer, hence use addLayer instead of addNewEmptyLayer
 		textNum++;
@@ -66,58 +70,92 @@ public class MangaBalloon {
 		return mangaTextLayer;
 	}
 	
-	public static WordBalloon calculateWordBalloonRef(Rectangle2D availableBound, Rectangle2D textBound, Font font, String balloonText) {
+	public WordBalloon getBalloonRef() {
+		return balloonRef;
+	}
+
+	public int getBalloonNum() {
+		return balloonNum;
+	}
+
+	public static WordBalloon calculateInitWordBalloonRef(double initialX, double initialY, Font font, String balloonText) {
 		Canvas c = new Canvas();
 		FontMetrics fm = c.getFontMetrics(font);
 		int fontWidth = fm.stringWidth(balloonText);
 		int fontHeight = fm.getHeight();
 		
-		AttributedString attrString = new AttributedString(balloonText);
-	    int paragraphStart = 0;
-	    int paragraphEnd = 0;
-		LineBreakMeasurer lineMeasurer = null;
+		double newBalloonW = 0.0;
+		double newBalloonH = 0.0;
 		
-        attrString.addAttribute(TextAttribute.FONT, font);
-        
-        // Create a new LineBreakMeasurer from the paragraph.
-        // It will be cached and re-used.
-        if (lineMeasurer == null) {
-            AttributedCharacterIterator paragraph = attrString.getIterator();
-            paragraphStart = paragraph.getBeginIndex();
-            paragraphEnd = paragraph.getEndIndex();
-            FontRenderContext frc = fm.getFontRenderContext();
-            lineMeasurer = new LineBreakMeasurer(paragraph, frc);
-        }
+		double newTextBoundW = getLongestWordWidth(fm, balloonText);
+		float drawPosY = 0;
 		
-        // Set break width to width of Component.
-        float breakWidth = (float) textBound.getWidth();
-        float drawPosY = 0;
-        // Set position to the index of the first character in the paragraph.
-        lineMeasurer.setPosition(paragraphStart);
-        
-        TextLayout layout = null;
-        // Get lines until the entire paragraph has been displayed.
-        while (lineMeasurer.getPosition() < paragraphEnd) {
+		do {
+			if (drawPosY > newTextBoundW) {
+				newTextBoundW = newTextBoundW * 1.1;
+			}
+			
+			AttributedString attrString = new AttributedString(balloonText);
+		    int paragraphStart = 0;
+		    int paragraphEnd = 0;
+			LineBreakMeasurer lineMeasurer = null;
+			
+	        attrString.addAttribute(TextAttribute.FONT, font);
+	        
+	        // Create a new LineBreakMeasurer from the paragraph.
+	        // It will be cached and re-used.
+	        if (lineMeasurer == null) {
+	            AttributedCharacterIterator paragraph = attrString.getIterator();
+	            paragraphStart = paragraph.getBeginIndex();
+	            paragraphEnd = paragraph.getEndIndex();
+	            FontRenderContext frc = fm.getFontRenderContext();
+	            lineMeasurer = new LineBreakMeasurer(paragraph, frc);
+	        }
+			
+	        // Set break width to width of Component.
+	        float breakWidth = (float) newTextBoundW;
+	        drawPosY = 0;
+	        // Set position to the index of the first character in the paragraph.
+	        lineMeasurer.setPosition(paragraphStart);
+	        
+	        TextLayout layout = null;
+	        // Get lines until the entire paragraph has been displayed.
+	        while (lineMeasurer.getPosition() < paragraphEnd) {
 
-            // Retrieve next layout. A cleverer program would also cache
-            // these layouts until the component is re-sized.
-            layout = lineMeasurer.nextLayout(breakWidth);
+	            // Retrieve next layout. A cleverer program would also cache
+	            // these layouts until the component is re-sized.
+	            layout = lineMeasurer.nextLayout(breakWidth);
 
-            // Compute pen x position. If the paragraph is right-to-left we
-            // will align the TextLayouts to the right edge of the panel.
-            // Note: this won't occur for the English text in this sample.
-            // Note: drawPosX is always where the LEFT of the text is placed.
-            float drawPosX = layout.isLeftToRight()
-                ? 0 : breakWidth - layout.getAdvance();
+	            // Compute pen x position. If the paragraph is right-to-left we
+	            // will align the TextLayouts to the right edge of the panel.
+	            // Note: this won't occur for the English text in this sample.
+	            // Note: drawPosX is always where the LEFT of the text is placed.
+	            float drawPosX = layout.isLeftToRight()
+	                ? 0 : breakWidth - layout.getAdvance();
 
-            // Move y-coordinate by the ascent of the layout.
-            drawPosY += layout.getAscent();
+	            // Move y-coordinate by the ascent of the layout.
+	            drawPosY += layout.getAscent();
 
-            // Move y-coordinate in preparation for next layout.
-            drawPosY += layout.getDescent() + layout.getLeading();
-        }
-        drawPosY += layout.getAscent();
-        drawPosY += layout.getDescent() + layout.getLeading();
-		return new WordBalloon(availableBound.getX(), availableBound.getY(), availableBound.getWidth(), drawPosY);
+	            // Move y-coordinate in preparation for next layout.
+	            drawPosY += layout.getDescent() + layout.getLeading();
+	        }
+		} while (drawPosY > newTextBoundW);
+		
+		newBalloonW = 2 * Math.sqrt(newTextBoundW / 2 * (newTextBoundW / 2 + drawPosY / 2));
+		newBalloonH = 2 * Math.sqrt(drawPosY / 2 * (newTextBoundW / 2 + drawPosY / 2));
+		
+		return new WordBalloon(initialX, initialY, newBalloonW, newBalloonH);
+	}
+
+	private static int getLongestWordWidth(FontMetrics fm, String balloonText) {
+		String[] splitedTxt = balloonText.split(" ");
+		int longestWordtWidth = fm.stringWidth("a"); 
+		for (String str : splitedTxt) {
+			int currWordWidth = fm.stringWidth(str);
+			if (currWordWidth > longestWordtWidth) {
+				longestWordtWidth = currWordWidth;
+			}
+		}
+		return longestWordtWidth;
 	}
 }
