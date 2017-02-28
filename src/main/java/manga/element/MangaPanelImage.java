@@ -174,8 +174,8 @@ public class MangaPanelImage {
 		Rect cropRect = new Rect(newImgTopLeftX, newImgTopLeftY, (int) panelBound.getWidth(), (int) panelBound.getHeight());
 		
 		// assign top-left coordinates of the region to crop for relocating faces
-		this.cropStartX = newImgTopLeftX;
-		this.cropStartY = newImgTopLeftY;
+		this.cropStartX = cropRect.x;
+		this.cropStartY = cropRect.y;
 		relocateFaces(resizedFaces);
 		
 		Mat imgAfterCrop = scaledImg.submat(cropRect);
@@ -197,8 +197,7 @@ public class MangaPanelImage {
 	private void relocateFaces(ArrayList<Face> resizedFaces) {
 		if (resizedFaces.size() > 0) {
 			for (Face resizedFace : resizedFaces) {
-				Rect currFaceBound = resizedFace.getBound();
-				Face relocatedFace = new Face(resizedFace, currFaceBound.x-cropStartX, currFaceBound.y-cropStartY);
+				Face relocatedFace = new Face(resizedFace, cropStartX, cropStartY);
 				relocatedFaces.add(relocatedFace);
 			}
 		}
@@ -228,8 +227,10 @@ public class MangaPanelImage {
 	public Face relocateFace(Face face) {
 		// scale face to panel-to-image ratio
 		Face scaledFace = new Face(face, scaleRatio);
-		// update coordinates with respect to the cropped region relative to the whole image
-		Face relocatedFace = new Face(scaledFace, scaledFace.getBound().x-cropStartX, scaledFace.getBound().y-cropStartY);
+		// Update coordinates with respect to the cropped region relative to the whole image,
+		// which is to reset the coordinates of face with top-left coordinates of crop region
+		// as the origin. 
+		Face relocatedFace = new Face(scaledFace, cropStartX, cropStartY);
 		return relocatedFace;
 	}
 }

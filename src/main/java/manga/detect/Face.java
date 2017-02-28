@@ -43,15 +43,22 @@ public class Face {
 	}
 	
 	/**
-	 * For setting new bound top-left coordinates
+	 * For setting new bound top-left coordinates.
+	 * Translate by (x,y).
 	 * @param face
 	 * @param newBound
 	 */
 	public Face(Face face, double x, double y) {
 		this.frameIndex = face.frameIndex;
 		this.img = face.img;
-		this.bound = new Rect((int) x, (int) y, face.bound.width, face.bound.height);
-		this.mouth = face.mouth;
+//		System.out.println("face before relocate: "+face);
+//		System.out.println("relocated face: "+new Rect((int) (face.bound.x-x), (int) (face.bound.y-y), face.bound.width, face.bound.height));
+		this.bound = new Rect((int) (face.bound.x-x), (int) (face.bound.y-y), face.bound.width, face.bound.height);
+		if (face.mouth != null) {
+			this.mouth = new Mouth(face.mouth, x, y);
+		} else {
+			this.mouth = null;
+		}
 	}
 
 	public Mouth getMouth() {

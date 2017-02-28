@@ -1,6 +1,7 @@
 package manga.element;
 
 import java.awt.Font;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
@@ -198,6 +199,8 @@ public class MangaPanel {
 						Rect boundToDraw = matchedSpeakerFace.getBound();
 						Imgproc.rectangle(testOutputImg, new Point(boundToDraw.x, boundToDraw.y), 
 								new Point(boundToDraw.x+boundToDraw.width, boundToDraw.y+boundToDraw.height), new Scalar(0, 255, 0));
+						Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+								new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
 						// testing
 					} else {
 						balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getMouth().getBound());
@@ -206,19 +209,39 @@ public class MangaPanel {
 						// draw mouth rect
 						Rect boundToDraw = matchedSpeakerFace.getMouth().getBound();
 						Imgproc.rectangle(testOutputImg, new Point(boundToDraw.x, boundToDraw.y), 
-								new Point(boundToDraw.x+boundToDraw.width, boundToDraw.y+boundToDraw.height), new Scalar(0, 0, 255));
+								new Point(boundToDraw.x+boundToDraw.width, boundToDraw.y+boundToDraw.height), new Scalar(255, 0, 0));
+						Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+								new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
 						// testing
 					}
 				}
+				
+				// determine balloon drawing direction
+				balloonDrag = createUserDragFromShape(balloonRef, balloonTailPt);
+				System.out.println("balloonDrag: "+balloonDrag);
+				
+				// update balloon text bound with drag
+				balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
+				
+				// testing
+				// draw balloon bound
+				Rectangle2D boundToDraw = balloonRef.getBounds2D();
+				System.out.println("boundToDraw: "+boundToDraw);
+				Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
+						new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
+								boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
+						new Scalar(0, 0, 255));
+				// draw tail direction point
+				Point2D dragEndPt = balloonDrag.getEndPoint();
+				Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
+						new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
+				// testing
 				
 				// testing
 				String filename = String.format("balloon%d.jpg", ++imgCounter);
 				System.out.println(String.format("Writing %s", filename));
 				Imgcodecs.imwrite(filename, testOutputImg);
 				// testing
-				
-				balloonDrag = createUserDragFromShape(balloonRef, balloonTailPt);
-				System.out.println("balloonDrag: "+balloonDrag);
 				
 		    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
 		    	mangaTextLayer.setAndCommitDefaultSetting(defaultFont, linkedSubtitlesText);
@@ -275,7 +298,7 @@ public class MangaPanel {
 	}
 
 	/**
-	 * Point to leftmost of the center
+	 * Point to center of the region
 	 * @param tailRegion
 	 * @return
 	 */
@@ -283,7 +306,7 @@ public class MangaPanel {
 		if (tailRegion == null) {
 			return null;
 		}
-		return new Point(tailRegion.x, tailRegion.y+tailRegion.width/2);
+		return new Point(tailRegion.x+tailRegion.width/2+bound.getX(), tailRegion.y+tailRegion.width/2+bound.getY());
 	}
 
 	/**
@@ -292,8 +315,7 @@ public class MangaPanel {
 	 * <p>
 	 * Rule to apply:
 	 * 1. Not to overlap with existing balloons
-	 * 2. Point the tail to speaker detected
-	 * 3. Not to occlude potential speakers' faces
+	 * 2. Not to occlude potential speakers' faces
 	 */
 	private WordBalloon calculateBalloonPos(WordBalloon currBalloonRef, ArrayList<Face> relocatedFaces) {
 		WordBalloon newBalloonRef = currBalloonRef;
@@ -342,17 +364,12 @@ public class MangaPanel {
 			if (bound.intersects(faceConvertedRect)) {
 				// if balloon occludes face
 				if (newBalloonRef.intersects(faceConvertedRect)) {
-					Rectangle2D intersection = newBalloonRef.getBounds2D().createIntersection(faceConvertedRect);
+//					Rectangle2D intersection = newBalloonRef.getBounds2D().createIntersection(faceConvertedRect);
 					if (Math.abs(faceConvertedRect.getMaxX()-bound.getMaxX()) > Math.abs(faceConvertedRect.getMaxY()-bound.getMaxY())) {
 						newBalloonX = faceConvertedRect.getMaxX();
 					} else {
 						newBalloonY = faceConvertedRect.getMaxY();
 					}
-//					if (intersection.getWidth() > intersection.getHeight()) {
-//						newBalloonY = faceConvertedRect.getMaxY()
-//					} else {
-//						newBalloonX = faceConvertedRect.getMaxX();
-//					}
 				}
 				newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
 			}

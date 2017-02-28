@@ -13,6 +13,12 @@ public class Mouth {
 	public Mouth(Mouth mouth, double ratio) {
 		this.bound = new Rect((int)(mouth.bound.x*ratio), (int)(mouth.bound.y*ratio), (int)(mouth.bound.width*ratio), (int)(mouth.bound.height*ratio));
 	}
+	
+	public Mouth(Mouth mouth, double x, double y) {
+//		System.out.println("mouth before relocate: "+mouth);
+//		System.out.println("relocated mouth: "+new Rect((int) (mouth.bound.x-x), (int) (mouth.bound.y-y), (int)(mouth.bound.width), (int)(mouth.bound.height)));
+		this.bound = new Rect((int) (mouth.bound.x-x), (int) (mouth.bound.y-y), (int)(mouth.bound.width), (int)(mouth.bound.height));
+	}
 
 	public Rect getBound() {
 		return bound;

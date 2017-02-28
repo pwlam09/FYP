@@ -389,8 +389,9 @@ public class SpeakerDetector {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
         MatOfRect mouthDetections = new MatOfRect();
-        Mat roi = img.submat(faceRect);
-        mouthDetector.detectMultiScale(roi, mouthDetections);
+        // mouth region detected may exceed faceRect, cannot use submat here
+//        Mat roi = img.submat(faceRect);
+        mouthDetector.detectMultiScale(img, mouthDetections);
 
 		Rectangle upperface = new Rectangle(faceRect.x, faceRect.y, faceRect.width, faceRect.height/2);
 		Rectangle lowerface = new Rectangle(faceRect.x, faceRect.y+faceRect.height/2, faceRect.width, faceRect.height/2);
@@ -400,19 +401,21 @@ public class SpeakerDetector {
 		// find all possible mouths for a face
         for (Rect mouthRect : mouthDetections.toArray()) {
         	boolean isPossibleMouth = false;
+        	// the top corners of mouth region are within face
     		if (faceRect.contains(new Point(mouthRect.x, mouthRect.y)) && faceRect.contains(new Point(mouthRect.x+mouthRect.width, mouthRect.y))) {
         		Rectangle mouthRectJava = new Rectangle(mouthRect.x, mouthRect.y, mouthRect.width, mouthRect.height);
         		Rectangle upperfaceIntersection = upperface.intersection(mouthRectJava);
         		Rectangle lowerfaceIntersection = lowerface.intersection(mouthRectJava);
-        		if ((upperfaceIntersection.width * upperfaceIntersection.height < mouthRectJava.width * mouthRectJava.height * 0.3) &&
-    				(lowerfaceIntersection.width * lowerfaceIntersection.height > mouthRectJava.width * mouthRectJava.height * 0.7)) {
+//        		if ((upperfaceIntersection.width * upperfaceIntersection.height < mouthRectJava.width * mouthRectJava.height * 0.3) &&
+//    				(lowerfaceIntersection.width * lowerfaceIntersection.height > mouthRectJava.width * mouthRectJava.height * 0.7)) {
+//        			isPossibleMouth = true;
+//        		}
+        		// mouth largely intersects with lower part of face
+        		if (lowerfaceIntersection.width * lowerfaceIntersection.height >= mouthRectJava.width * mouthRectJava.height * 0.7)
         			isPossibleMouth = true;
-        		}
     		}
         	if (isPossibleMouth) {
         		possibleMouths.add(mouthRect);
-//            	Imgproc.rectangle(img, new Point(mouthRect.x, mouthRect.y), new Point(mouthRect.x + mouthRect.width, mouthRect.y + mouthRect.height),
-//                        new Scalar(0, 255, 0));
         	}
         }
         
@@ -431,8 +434,6 @@ public class SpeakerDetector {
     	        	}
     	        }
 	        }
-//        	Imgproc.rectangle(img, new Point(selectedMouth.x, selectedMouth.y), new Point(selectedMouth.x + selectedMouth.width, selectedMouth.y + selectedMouth.height),
-//                    new Scalar(0, 0, 255));
     	}
     	
     	return selectedMouth;
