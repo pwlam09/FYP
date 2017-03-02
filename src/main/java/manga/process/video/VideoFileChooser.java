@@ -75,8 +75,8 @@ public class VideoFileChooser {
                  */
                 MangaGenerator.preprocessing(selectedFile.getAbsolutePath());
 //                AudioProcessor.extractAudio();
-            	MangaGenerator.addNewMangaPage();
-            	MangaGenerator.drawMangaPanels();
+            	MangaGenerator.addMangaPages();
+            	MangaGenerator.setAndDrawMangaPanels();
 //            	SubtitleProcessor.printSubText();
 //            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
             	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers

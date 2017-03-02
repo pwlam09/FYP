@@ -1,32 +1,20 @@
 package manga.element;
 
-import pixelitor.colors.FillType;
 import pixelitor.gui.ImageComponent;
 import pixelitor.gui.ImageComponents;
-import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
 import pixelitor.tools.ShapeType;
 import pixelitor.tools.ShapesAction;
 import pixelitor.tools.Tools;
 import pixelitor.tools.UserDrag;
-import pixelitor.tools.shapes.WordBalloon;
 import pixelitor.tools.shapestool.BasicStrokeJoin;
 import pixelitor.tools.shapestool.ShapesTool;
 import pixelitor.tools.shapestool.TwoPointBasedPaint;
 import pixelitor.Canvas;
 import pixelitor.Composition;
-import pixelitor.NewImage;
 
-import java.awt.Frame;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.lang.management.ManagementPermission;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.opencv.video.Video;
 
 import manga.process.subtitle.SubtitleProcessor;
 import manga.process.video.KeyFrame;
@@ -68,7 +56,7 @@ public final class MangaGenerator {
 		MangaGenerator.currTimestamp = currTimestamp;
 	}
 	
-	public static void addNewMangaPage() {
+	public static void addMangaPages() {
 		keyFrameCount = VideoProcessor.getKeyFrameCount();
 		int pageNum = keyFrameCount / numOfPanelsPerPage;
 		for (int i = 0; i<pageNum; i++) {
@@ -79,8 +67,6 @@ public final class MangaGenerator {
 			MangaPage page = new MangaPage();
 			pages.add(page);
 		}
-//		MangaPage page = new MangaPage();
-//		pageList.add(page);
 	}
 	
 	public static MangaPage getActivePage() {
@@ -136,14 +122,15 @@ public final class MangaGenerator {
 	/**
 	 * Draw 6 manga panels on different MangaPanel layers
 	 */
-	public static void drawMangaPanels() {
+	public static void setAndDrawMangaPanels() {
 		for (MangaPage page: pages) {
 
 			// 6 panels at most for a page?
 			// 1 key frame = 1 panel
 	    	for (int i=0; i<numOfPanelsPerPage && keyFrameCount>0; i++) {
+	    		ArrayList<KeyFrame> allKeyFrames = VideoProcessor.getKeyFrames();
+	    		page.addNewMangaPanel(allKeyFrames.get(allKeyFrames.size()-keyFrameCount));
 	    		keyFrameCount--;
-	    		page.addNewMangaPanel();
 	    	}
 
 			ArrayList<MangaPanel> panels = page.getPanels();
@@ -207,8 +194,6 @@ public final class MangaGenerator {
         	MangaPage currentPage = pages.get(i);
     		for (int j = 0; j<currentPage.getPanels().size(); j++) {
             	MangaPanel panel = currentPage.getPanels().get(j);
-            	KeyFrame keyFrame = extractedFrameImgs.get(frameImgCounter++);
-            	panel.setKeyFrame(keyFrame);
             	panel.fitImageToPanelBound();
             }
         }

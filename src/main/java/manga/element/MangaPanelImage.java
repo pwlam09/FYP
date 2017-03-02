@@ -1,32 +1,16 @@
 package manga.element;
 
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.imageio.ImageIO;
-
-import org.assertj.swing.hierarchy.NewHierarchy;
-import org.mockito.internal.matchers.Null;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 import manga.detect.Face;
-import manga.detect.Speaker;
-import manga.process.video.KeyFrame;
 import pixelitor.Composition;
 import pixelitor.layers.ImageLayer;
 
@@ -40,7 +24,6 @@ public class MangaPanelImage {
 	private ArrayList<Face> detectedFaces;
 	private double scaleRatio;
 	private ArrayList<Face> relocatedFaces;
-	private BufferedImage subImageAsBufferedImage;
 	private Mat subImageAsMat;
 	private ImageLayer layer;	// the layer the image belong to
 	private int cropStartX;
@@ -61,12 +44,17 @@ public class MangaPanelImage {
 	}
 	
 	public BufferedImage getSubImageAsBufferedImage() {
-		if (subImageAsBufferedImage == null) {
-			subImageAsBufferedImage = Mat2BufferedImage(getSubImgAsMat());
-		}
-		return subImageAsBufferedImage;
+//		if (subImageAsBufferedImage == null) {
+//			subImageAsBufferedImage = Mat2BufferedImage(getSubImgAsMat());
+//		}
+//		return subImageAsBufferedImage;
+		return Mat2BufferedImage(getSubImgAsMat());
 	}
 	
+	/**
+	 * public for testing.
+	 * set to private?
+	 */
 	public Mat getSubImgAsMat() {
 		if (subImageAsMat == null) {
 			subImageAsMat = scaleAndCropSubImage(keyFrameImg, panelBound, detectedFaces);

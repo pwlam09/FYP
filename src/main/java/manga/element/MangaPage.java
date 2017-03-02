@@ -2,6 +2,9 @@ package manga.element;
 
 import java.util.ArrayList;
 
+import manga.process.subtitle.Subtitle;
+import manga.process.subtitle.SubtitleProcessor;
+import manga.process.video.KeyFrame;
 import pixelitor.Composition;
 import pixelitor.NewImage;
 import pixelitor.colors.FillType;
@@ -34,8 +37,12 @@ public class MangaPage {
 		return this.comp;
 	}
 	
-	public ImageLayer addNewMangaPanel() {
-		MangaPanel newPanel = new MangaPanel(this);
+	public ImageLayer addNewMangaPanel(KeyFrame keyFrame) {
+		// map subtitles
+		ArrayList<Subtitle> subtitles = SubtitleProcessor.getSubtitles(MangaGenerator.getCurrTimestamp(), keyFrame.geteShotTimestamp());
+		MangaGenerator.setCurrTimestamp(keyFrame.geteShotTimestamp());
+		
+		MangaPanel newPanel = new MangaPanel(this, keyFrame, subtitles);
 		panels.add(newPanel);
         return newPanel.getLayer();
 	}

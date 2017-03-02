@@ -2,6 +2,7 @@ package manga.process.video;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
+import java.util.ArrayList;
 
 import org.opencv.core.Mat;
 

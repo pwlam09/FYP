@@ -6,15 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jdesktop.swingx.JXTipOfTheDay.ShowOnStartupChoice;
-
-import manga.process.video.VideoProcessor;
 
 /**
  * @author PuiWa
