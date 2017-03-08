@@ -98,191 +98,150 @@ public class MangaPanel {
 		String linkedSubtitlesText = "";
 		
 		if (subtitles.size() > 0) {
-			/**
-			 *  group subtitles of same speaker
-			 */
-//			for (int i=0; i<subtitles.size(); i++) {
-//				ArrayList<Subtitle> subtitlesOfSameSpeaker = new ArrayList<>();
-//				boolean sameSpeaker = true;
-//
-//				// initial setting, at least one subtitle per balloon
-//				Subtitle currSubtitle = subtitles.get(i);
-//				subtitlesOfSameSpeaker.add(currSubtitle);
-//				Subtitle nextSubtitle = null;
-//
-//				// if there is any subtitle followed
-//				if (i + 1 < subtitles.size()) {
-//					nextSubtitle = subtitles.get(i + 1);
-//				}
-//				
-//				while (sameSpeaker && currSubtitle != null) {
-//					// initialize to false for next checking
-//					sameSpeaker = false;
-//					
-//					// if there is any subtitle followed, update nextSubtitle
-//					if (i + 1 < subtitles.size()) {
-//						nextSubtitle = subtitles.get(i + 1);
-//					} else {
-//						nextSubtitle = null;
-//					}
-//					
-//					if (nextSubtitle != null) {
-//						// check if the subtitles have the same speaker
-//						if (currSubtitle.hasSameSpeaker(nextSubtitle)) {
-//							subtitlesOfSameSpeaker.add(nextSubtitle);
-//							sameSpeaker = true;
-//							i++;
-//						}
-//					}
-//					
-//					// update currSubtitle for next comparison
-//					currSubtitle = nextSubtitle;
-//				}
-				
-				// assume all from same speaker
-				ArrayList<Subtitle> subtitlesOfSameSpeaker = new ArrayList<>();
-				subtitlesOfSameSpeaker = subtitles;
-				
-				linkedSubtitlesText = Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker);
-		    	
-				// select the first subtitle with non-null speaker (if more than one) as reference
-				// or the speaker of the only subtitle
-				// both case may have null speaker
-				Speaker selectedSpeakerRef = null;
-				if (subtitlesOfSameSpeaker.size() > 1) {
-					for (Subtitle subtitle : subtitlesOfSameSpeaker) {
-						if (subtitle.getSpeaker() != null) {
-							selectedSpeakerRef = subtitle.getSpeaker();
-							break;
-						}
-					}
-				} else {
-					selectedSpeakerRef = subtitlesOfSameSpeaker.get(0).getSpeaker();
-				}
-				
-				System.out.println("selectedSpeakerRef: "+selectedSpeakerRef);
-				
-				Face relocatedSpeakerFace = null;
-				Face matchedSpeakerFace = null;
-				
-				if (selectedSpeakerRef != null) {
-					relocatedSpeakerFace = panelImg.relocateFace(selectedSpeakerRef.getFace());
-				}
-
-				// match speaker's face to face of current panel image.
-				// if not found, the largest face of panel image detected will be used
-				matchedSpeakerFace = matchSpeakerFace(relocatedSpeakerFace, panelImg.getRelocatedFaces());
-				System.out.println("matchedSpeakerFace: "+matchedSpeakerFace);
-				
-		    	Composition comp = page.getComp();
-		    	
-		    	UserDrag balloonDrag = null;
-		    	
-				// this font will be used to calculate the area required for displaying the subtitle text in this font
-		    	Font defaultFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
-				
-		    	// calculate the balloon size for displaying subtitle text
-		    	WordBalloon balloonRef = MangaBalloon.calculateInitWordBalloonRef(bound.getX(), bound.getY(), defaultFont, linkedSubtitlesText);
-//				System.out.println("balloonRef bound after cal textbound: "+balloonRef.getBounds2D());
-		    	
-		    	System.out.println("balloonRef before cal: "+balloonRef.getBounds2D());
-				balloonRef = calculateBalloonPos(balloonRef, matchedSpeakerFace, panelImg.getRelocatedFaces());
-				System.out.println("balloonRef after cal: "+balloonRef.getBounds2D());
-				
-				Point balloonTailPt = null;
-				
-				// testing
-				Mat testOutputImg = panelImg.getSubImgAsMat();
-				// testing
-				
-				if (matchedSpeakerFace == null) {
-					balloonTailPt = calculateBalllonTailPos(null);
-				} else {
-					if (matchedSpeakerFace.getMouth() == null) {
-						// if mouth position not available, point to face
-						balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getBound());
-
-						// testing
-						// draw face rect
-						Rect faceBoundToDraw = matchedSpeakerFace.getBound();
-						Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
-								new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
-						Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-								new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
-						// testing
-					} else {
-						balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getMouth().getBound());
-
-						// testing						
-						// draw face rect
-						Rect faceBoundToDraw = matchedSpeakerFace.getBound();
-						Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
-								new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
-						Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-								new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
-						// draw mouth rect
-						Rect mouthBoundToDraw = matchedSpeakerFace.getMouth().getBound();
-						Imgproc.rectangle(testOutputImg, new Point(mouthBoundToDraw.x, mouthBoundToDraw.y), 
-								new Point(mouthBoundToDraw.x+mouthBoundToDraw.width, mouthBoundToDraw.y+mouthBoundToDraw.height), new Scalar(255, 0, 0));
-						Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-								new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
-						// testing
+			// assume all from same speaker
+			ArrayList<Subtitle> subtitlesOfSameSpeaker = new ArrayList<>();
+			subtitlesOfSameSpeaker = subtitles;
+			
+			linkedSubtitlesText = Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker);
+			System.out.println("linkedSubtitlesText: "+linkedSubtitlesText);
+			
+			// select the first subtitle with non-null speaker (if more than one) as reference
+			// or the speaker of the only subtitle
+			// both case may have null speaker
+			Speaker selectedSpeakerRef = null;
+			if (subtitlesOfSameSpeaker.size() > 1) {
+				for (Subtitle subtitle : subtitlesOfSameSpeaker) {
+					if (subtitle.getSpeaker() != null) {
+						selectedSpeakerRef = subtitle.getSpeaker();
+						break;
 					}
 				}
-				
-				System.out.println("final balloonRef before drag: "+balloonRef.getBounds2D());
-				
-				// determine balloon drawing direction
-				balloonDrag = createUserDragFromShape(balloonRef, balloonTailPt);
-				System.out.println("balloonDrag: "+balloonDrag);
-				
-				// update balloon text bound with drag
-				balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
-				
-				// testing
-				// draw balloon bound
-				Rectangle2D boundToDraw = balloonRef.getBounds2D();
-				System.out.println("boundToDraw: "+boundToDraw);
-				Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
-						new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
-								boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
-						new Scalar(0, 0, 255));
-				// draw tail direction point
-				Point2D dragEndPt = balloonDrag.getEndPoint();
-				Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
-						new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
-				// testing
-				
-				// testing
-				String filename = String.format("balloon%d.jpg", ++imgCounter);
-				System.out.println(String.format("Writing %s", filename));
-				Imgcodecs.imwrite(filename, testOutputImg);
-				// testing
-				
-		    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
-		    	mangaTextLayer.setAndCommitDefaultSetting(defaultFont, linkedSubtitlesText);
-		    	
-		        // set text translation within balloon bound
-		    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
-		    	
-		    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);
-		    	balloons.add(balloon);
-		    	
-				// initialize shapes tool for drawing balloon
-		    	ShapesTool shapesTool = Tools.SHAPES;
-		        // call reset method or the previous stroke will be used
-		        shapesTool.resetDrawingAndStroke();
-		        shapesTool.setShapeType(ShapeType.WORDBALLOON);
-		        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
-		        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
-		        shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
-		        // reset stroke join and width to default
-		        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 1);
-		        
-		        // paint balloon
-		    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), balloonDrag);
+			} else {
+				selectedSpeakerRef = subtitlesOfSameSpeaker.get(0).getSpeaker();
 			}
-//        }
+			
+//				System.out.println("selectedSpeakerRef: "+selectedSpeakerRef);
+			
+			Face relocatedSpeakerFace = null;
+			Face matchedSpeakerFace = null;
+			
+			if (selectedSpeakerRef != null) {
+				relocatedSpeakerFace = panelImg.relocateFace(selectedSpeakerRef.getFace());
+			}
+
+			// match speaker's face to face of current panel image.
+			// if not found, the largest face of panel image detected will be used
+			matchedSpeakerFace = matchSpeakerFace(relocatedSpeakerFace, panelImg.getRelocatedFaces());
+//				System.out.println("matchedSpeakerFace: "+matchedSpeakerFace);
+			
+	    	Composition comp = page.getComp();
+	    	
+	    	UserDrag balloonDrag = null;
+	    	
+			// this font will be used to calculate the area required for displaying the subtitle text in this font
+	    	Font defaultFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
+			
+	    	// calculate the balloon size for displaying subtitle text
+	    	WordBalloon balloonRef = MangaBalloon.calculateInitWordBalloonRef(bound.getX(), bound.getY(), defaultFont, linkedSubtitlesText);
+//				System.out.println("balloonRef bound after cal textbound: "+balloonRef.getBounds2D());
+	    	
+//		    	System.out.println("balloonRef before cal: "+balloonRef.getBounds2D());
+			balloonRef = calculateBalloonPos(balloonRef, matchedSpeakerFace, panelImg.getRelocatedFaces());
+//				System.out.println("balloonRef after cal: "+balloonRef.getBounds2D());
+			
+			Point balloonTailPt = null;
+			
+			// testing
+			Mat testOutputImg = panelImg.getSubImgAsMat();
+			// testing
+			
+			if (matchedSpeakerFace == null) {
+				balloonTailPt = calculateBalllonTailPos(null);
+			} else {
+				if (matchedSpeakerFace.getMouth() == null) {
+					// if mouth position not available, point to face
+					balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getBound());
+
+					// testing
+					// draw face rect
+					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
+					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
+							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
+					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
+					// testing
+				} else {
+					balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getMouth().getBound());
+
+					// testing						
+					// draw face rect
+					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
+					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
+							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
+					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
+					// draw mouth rect
+					Rect mouthBoundToDraw = matchedSpeakerFace.getMouth().getBound();
+					Imgproc.rectangle(testOutputImg, new Point(mouthBoundToDraw.x, mouthBoundToDraw.y), 
+							new Point(mouthBoundToDraw.x+mouthBoundToDraw.width, mouthBoundToDraw.y+mouthBoundToDraw.height), new Scalar(255, 0, 0));
+					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
+					// testing
+				}
+			}
+			
+//				System.out.println("final balloonRef before drag: "+balloonRef.getBounds2D());
+			
+			// determine balloon drawing direction
+			balloonDrag = createUserDragFromShape(balloonRef, balloonTailPt);
+//				System.out.println("balloonDrag: "+balloonDrag);
+			
+			// update balloon text bound with drag
+			balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
+			
+			// testing
+			// draw balloon bound
+			Rectangle2D boundToDraw = balloonRef.getBounds2D();
+//				System.out.println("boundToDraw: "+boundToDraw);
+			Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
+					new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
+							boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
+					new Scalar(0, 0, 255));
+			// draw tail direction point
+			Point2D dragEndPt = balloonDrag.getEndPoint();
+			Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
+					new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
+			// testing
+			
+			// testing
+			String filename = String.format("balloon%d.jpg", ++imgCounter);
+			System.out.println(String.format("Writing %s", filename));
+			Imgcodecs.imwrite(filename, testOutputImg);
+			// testing
+			
+	    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
+	    	mangaTextLayer.setAndCommitDefaultSetting(defaultFont, linkedSubtitlesText);
+	    	
+	        // set text translation within balloon bound
+	    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
+	    	
+	    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);
+	    	balloons.add(balloon);
+	    	
+			// initialize shapes tool for drawing balloon
+	    	ShapesTool shapesTool = Tools.SHAPES;
+	        // call reset method or the previous stroke will be used
+	        shapesTool.resetDrawingAndStroke();
+	        shapesTool.setShapeType(ShapeType.WORDBALLOON);
+	        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
+	        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
+	        shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
+	        // reset stroke join and width to default
+	        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 1);
+	        
+	        // paint balloon
+	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), balloonDrag);
+		}
     }
 
 	/**

@@ -178,12 +178,12 @@ public class VideoProcessor {
 		return allKeyFrames;
 	}
 	
-	public static void detectSpeakersPosition(String videoPath) {
+	public static void detectAndSetSubtitleSpeakers(String videoPath) {
 		File opencvDll = new File(VideoProcessor.class.getResource("/opencv/opencv_java310.dll").getFile());
 		String openCVPath = opencvDll.getAbsolutePath();
 		System.load(openCVPath);
 		
-		ArrayList<Subtitle> allSubtitles = SubtitleProcessor.getAllSubtitles();
+		ArrayList<Subtitle> allSubtitles = SubtitleProcessor.getAllRawSubtitles();
 		VideoCapture vid = new VideoCapture(videoPath);
 		int counter = 0;
 		Mat opencvImg = new Mat();

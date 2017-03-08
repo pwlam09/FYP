@@ -6,17 +6,22 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.PrimitiveIterator.OfDouble;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import manga.process.video.KeyFrame;
+import manga.process.video.VideoProcessor;
 
 /**
  * @author PuiWa
  * 
  */
 public class SubtitleProcessor {
-	private static ArrayList<Subtitle> allSubtitles;
 	private static SubtitleProcessor instance = new SubtitleProcessor();
-
+	private static ArrayList<Subtitle> allRawSubtitles;
+	private static ArrayList<Subtitle> allProcessedSubtitles;
+	
 	private static int subtitleCounter = 0;	// for testing
 
 	/**
@@ -34,8 +39,11 @@ public class SubtitleProcessor {
 			+ sp + "(X1:\\d.*?)??" + nl + "(.*?)" + nl + nl);
 	
 	private SubtitleProcessor() {
-		if (allSubtitles == null) {
-			allSubtitles = new ArrayList<>();
+		if (allRawSubtitles == null) {
+			allRawSubtitles = new ArrayList<>();
+		}		
+		if (allProcessedSubtitles == null) {
+			allProcessedSubtitles = new ArrayList<>();
 		}
 	}
 	
@@ -79,7 +87,7 @@ public class SubtitleProcessor {
 			if (subText.contains("<") && subText.contains(">")) {
 				subText = getSubtitleTextWithoutStyle(subText);
 			}
-			allSubtitles.add(new Subtitle(sTimestamp, eTimestamp, subText));
+			allRawSubtitles.add(new Subtitle(sTimestamp, eTimestamp, subText));
 		}
 	}
 	
@@ -97,7 +105,7 @@ public class SubtitleProcessor {
 		String[] splitedTextList = styledText.split(">");
 		for (int i = 0; i < splitedTextList.length; i++) {
 			if (splitedTextList[i].charAt(0) != '<') {
-				subtitleText = subtitleText + splitedTextList[i].substring(0, splitedTextList[i].indexOf("<")) + " ";
+				subtitleText = subtitleText + splitedTextList[i].substring(0, splitedTextList[i].indexOf("<"));
 			}
 		}
 		return subtitleText;
@@ -107,9 +115,27 @@ public class SubtitleProcessor {
 	 * for testing
 	 */
 	public static void printAllSubtitles() {
-		for (Subtitle subtitle : allSubtitles) {
+		for (Subtitle subtitle : allRawSubtitles) {
 			System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
 		}
+	}
+
+	
+	/**
+	 * For testing
+	 * @param timestamp
+	 * @return
+	 */
+	public static String timestampToTimeString(long timestamp) {
+		String colon = ":";
+		int h = (int) (((timestamp / 1000) / 60) / 60);
+		int m = (int) (timestamp / (1000 * 60) % 60);
+		int s = (int) (timestamp / 1000 % 60);
+		return (h+colon+m+colon+s);
+	}
+
+	public static ArrayList<Subtitle> getAllRawSubtitles() {
+		return allRawSubtitles;
 	}
 
 	/**
@@ -121,16 +147,14 @@ public class SubtitleProcessor {
 	 * @param timestamp2 end timestamp of the shot
 	 * @return a list of subtitle text between two keyframes
 	 */
-	public static ArrayList<Subtitle> getSubtitles(double timestamp1, double timestamp2) {
+	public static ArrayList<Subtitle> getProcessedSubtitles(double timestamp1, double timestamp2) {
 		ArrayList<Subtitle> subtitles = new ArrayList<>();
-//		double sShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp1);
-//		double eShotTimestamp = VideoProcessor.getsShotTimestamp(timestamp2);
 		double sShotTimestamp = timestamp1;
 		double eShotTimestamp = timestamp2;
-		for (Subtitle subtitle : allSubtitles) {
+		for (Subtitle subtitle : allProcessedSubtitles) {
 			double sSubtitleTimestamp = subtitle.getsTime();
 			double eSubtitleTimestamp = subtitle.geteTime();
-			
+
 //			boolean isStartWithinShot = (sShotTimestamp <= sSubtitleTimestamp) && (sSubtitleTimestamp < eShotTimestamp) &&
 //					(Math.abs(sSubtitleTimestamp-eShotTimestamp) >= Math.abs(eSubtitleTimestamp-eShotTimestamp));
 //			boolean isStartBeforeShot = (sShotTimestamp < eSubtitleTimestamp) && (eSubtitleTimestamp <= eShotTimestamp) &&
@@ -148,29 +172,57 @@ public class SubtitleProcessor {
 //			}
 			
 			if (sSubtitleTimestamp >= sShotTimestamp && sSubtitleTimestamp < eShotTimestamp) {
-//				System.out.println("subtitle text: "+subtitle.getText());
 				subtitles.add(subtitle);
 			}
 		}
-//		System.out.println("sShot Time: "+timestampToTimeString(sShotTimestamp));
-//		System.out.println("eShot Time: "+timestampToTimeString(eShotTimestamp));
 		return subtitles;
 	}
 	
-	/**
-	 * For testing
-	 * @param timestamp
-	 * @return
-	 */
-	public static String timestampToTimeString(long timestamp) {
-		String colon = ":";
-		int h = (int) (((timestamp / 1000) / 60) / 60);
-		int m = (int) (timestamp / (1000 * 60) % 60);
-		int s = (int) (timestamp / 1000 % 60);
-		return (h+colon+m+colon+s);
-	}
+	public static void groupAndSummarizeSubtitles() {
+		ArrayList<KeyFrame> keyFrames = VideoProcessor.getKeyFrames();
 
-	public static ArrayList<Subtitle> getAllSubtitles() {
-		return allSubtitles;
+		double cShotTimestamp = 0.0;
+
+		for (KeyFrame keyFrame : keyFrames) {
+			// group subtitles within corresponding key frame time interval
+			ArrayList<Subtitle> mappedSubtitles = new ArrayList<>();
+			double kfeShotTimestamp = keyFrame.geteShotTimestamp();
+			for (Subtitle subtitle : allRawSubtitles) {
+				if (subtitle.getsTime() >= cShotTimestamp && subtitle.getsTime() < kfeShotTimestamp) {
+					mappedSubtitles.add(subtitle);
+				}
+			}
+
+			if (mappedSubtitles.size() > 0) {
+				ArrayList<Subtitle> summarizedSubtitles = new ArrayList<>();
+				
+				// group subtitles with same speaker
+				for (int i = 0; i < mappedSubtitles.size(); i++) {
+					ArrayList<Subtitle> subtitlesOfSameSpeaker = new ArrayList<>();
+					boolean sameSpeaker = true;
+					Subtitle summarizedSubtitle = null;
+					
+					// check if the subtitles are of same speaker when number of subtitles>1
+					while (sameSpeaker && i < mappedSubtitles.size()) {
+						subtitlesOfSameSpeaker.add(mappedSubtitles.get(i));
+						if (i+1 < mappedSubtitles.size()) {
+//							sameSpeaker = mappedSubtitles.get(i).hasSameSpeaker(mappedSubtitles.get(i+1));
+							// assume all from same speaker
+							sameSpeaker = true;
+						}
+						// increment and continue to group subtitle until subtitle not from same speaker or no more subtitle
+						if (sameSpeaker) {
+							i++;
+						}
+					}
+					
+					summarizedSubtitle = SubtitleCompressor.summarizeSubtitles(subtitlesOfSameSpeaker);
+					summarizedSubtitles.add(summarizedSubtitle);
+				}
+				allProcessedSubtitles.addAll(summarizedSubtitles);
+			}
+			// for next time interval check
+			cShotTimestamp = kfeShotTimestamp;
+		}
 	}
 }

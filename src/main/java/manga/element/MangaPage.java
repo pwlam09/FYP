@@ -39,10 +39,11 @@ public class MangaPage {
 	
 	public ImageLayer addNewMangaPanel(KeyFrame keyFrame) {
 		// map subtitles
-		ArrayList<Subtitle> subtitles = SubtitleProcessor.getSubtitles(MangaGenerator.getCurrTimestamp(), keyFrame.geteShotTimestamp());
+		ArrayList<Subtitle> processedSubtitles = SubtitleProcessor.getProcessedSubtitles(MangaGenerator.getCurrTimestamp(), keyFrame.geteShotTimestamp());
+		
 		MangaGenerator.setCurrTimestamp(keyFrame.geteShotTimestamp());
 		
-		MangaPanel newPanel = new MangaPanel(this, keyFrame, subtitles);
+		MangaPanel newPanel = new MangaPanel(this, keyFrame, processedSubtitles);
 		panels.add(newPanel);
         return newPanel.getLayer();
 	}

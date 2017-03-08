@@ -108,6 +108,7 @@
             <classifier>windows-x86_64</classifier>
         </dependency> -->
         
+        <!-- opencv -->
         <dependency>
             <groupId>org.opencv</groupId>
             <artifactId>opencv</artifactId>
@@ -123,6 +124,18 @@
   	        <systemPath>C:\PP_file\cityuFYP\FYP_git\FYP\repo\opencv-2413.jar</systemPath>
         	<scope>system</scope>    	     
     	</dependency>  -->
-    	
+
+		<!-- stanford nlp processing -->
+	 	<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>3.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>edu.stanford.nlp</groupId>
+			<artifactId>stanford-corenlp</artifactId>
+			<version>3.7.0</version>
+			<classifier>models</classifier>
+		</dependency>
     </dependencies>
 </project>

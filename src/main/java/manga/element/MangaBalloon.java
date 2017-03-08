@@ -13,8 +13,6 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 
-import org.hamcrest.core.Is;
-
 import manga.process.subtitle.SubtitleProcessor;
 import pixelitor.Composition;
 import pixelitor.history.AddToHistory;
