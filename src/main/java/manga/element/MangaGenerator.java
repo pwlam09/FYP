@@ -45,13 +45,14 @@ public final class MangaGenerator {
 		
 		// parse the extracted subtitle file and store subtitle text and related timestamps
 		SubtitleProcessor.parseSRT();
-		SubtitleProcessor.printAllSubtitles();	// testing
+//		SubtitleProcessor.printAllRawSubtitles();	// testing
 		
 		// detect and set the speaker of each subtitle
 		VideoProcessor.detectAndSetSubtitleSpeakers(videoPath);
 		
 		// group and compress subtitles with reference to key frames and subtitles
 		SubtitleProcessor.groupAndSummarizeSubtitles();
+//		SubtitleProcessor.printAllProcessedSubtitles();	// testing
 	}
 	
 	public static double getCurrTimestamp() {

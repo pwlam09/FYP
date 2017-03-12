@@ -19,10 +19,6 @@ package pixelitor;
 
 import com.bric.util.JVM;
 
-import manga.element.MangaGenerator;
-import manga.process.audio.AudioProcessor;
-import manga.process.subtitle.SubtitleProcessor;
-import manga.process.video.VideoProcessor;
 import net.jafama.FastMath;
 import pixelitor.colors.FgBgColors;
 import pixelitor.colors.FillType;

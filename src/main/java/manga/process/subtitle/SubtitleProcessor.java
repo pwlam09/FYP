@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.PrimitiveIterator.OfDouble;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,8 +20,6 @@ public class SubtitleProcessor {
 	private static SubtitleProcessor instance = new SubtitleProcessor();
 	private static ArrayList<Subtitle> allRawSubtitles;
 	private static ArrayList<Subtitle> allProcessedSubtitles;
-	
-	private static int subtitleCounter = 0;	// for testing
 
 	/**
 	 * group 1:		subtitle numeric counter, 
@@ -114,9 +111,20 @@ public class SubtitleProcessor {
 	/**
 	 * for testing
 	 */
-	public static void printAllSubtitles() {
+	public static void printAllRawSubtitles() {
+		int subtitleCounter = 0;
 		for (Subtitle subtitle : allRawSubtitles) {
-			System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
+			System.out.printf("Raw Subtitle %d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
+		}
+	}
+	
+	/**
+	 * for testing
+	 */
+	public static void printAllProcessedSubtitles() {
+		int subtitleCounter = 0;
+		for (Subtitle subtitle : allProcessedSubtitles) {
+			System.out.printf("Processed Subtitle %d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
 		}
 	}
 

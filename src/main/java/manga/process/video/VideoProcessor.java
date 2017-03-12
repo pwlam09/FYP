@@ -42,9 +42,9 @@ public class VideoProcessor {
 		extractSRT(videoPath);
 		// store key frames for later use
 		allKeyFrames = extractKeyFrames(videoPath);
-		for (KeyFrame keyFrame : allKeyFrames) {
-			System.out.println(keyFrame);
-		}
+//		for (KeyFrame keyFrame : allKeyFrames) {
+//			System.out.println(keyFrame);
+//		}
 	}
 	
 	private static boolean extractKeyFrameInfo(String videoPath) {

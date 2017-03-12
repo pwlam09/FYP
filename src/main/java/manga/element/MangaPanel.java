@@ -103,7 +103,7 @@ public class MangaPanel {
 			subtitlesOfSameSpeaker = subtitles;
 			
 			linkedSubtitlesText = Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker);
-			System.out.println("linkedSubtitlesText: "+linkedSubtitlesText);
+//			System.out.println("linkedSubtitlesText: "+linkedSubtitlesText);
 			
 			// select the first subtitle with non-null speaker (if more than one) as reference
 			// or the speaker of the only subtitle
@@ -405,7 +405,7 @@ public class MangaPanel {
 		 */
 		if (matchedSpeakerFace != null) {
 			Rect speakerFaceRect = matchedSpeakerFace.getBound();
-			System.out.println("current resized face rect: "+matchedSpeakerFace.getBound());
+//			System.out.println("current resized face rect: "+matchedSpeakerFace.getBound());
 			// relocate face coordinates based on panel position
 			double faceConvertedRectX = speakerFaceRect.x+bound.getX();
 			double faceConvertedRectY = speakerFaceRect.y+bound.getY();
@@ -413,7 +413,7 @@ public class MangaPanel {
 			
 			// if face is within panel bound
 			if (bound.intersects(faceConvertedRect)) {
-				System.out.println("intersected face rect: "+faceConvertedRect);
+//				System.out.println("intersected face rect: "+faceConvertedRect);
 				// if balloon occludes face
 				if (newBalloonRef.intersects(faceConvertedRect)) {		
 					if (bound.getMaxX()-faceConvertedRect.getMaxX() >= newBalloonRefW) {
