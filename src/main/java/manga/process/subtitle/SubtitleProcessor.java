@@ -44,13 +44,6 @@ public class SubtitleProcessor {
 		}
 	}
 	
-	public SubtitleProcessor getInstance() {
-		if (instance == null) {
-			instance = new SubtitleProcessor();
-		}
-		return instance;
-	}
-	
 	public static void parseSRT() {
 		File srt = new File("./sub.srt");
 		FileReader fr = null;

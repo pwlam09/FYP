@@ -13,8 +13,6 @@ import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;
 
-import manga.detect.Face;
-import manga.detect.Speaker;
 import manga.detect.SpeakerDetector;
 import manga.process.subtitle.Subtitle;
 import manga.process.subtitle.SubtitleProcessor;
@@ -26,10 +24,8 @@ import manga.process.subtitle.SubtitleProcessor;
  * @author PuiWa
  */
 public class VideoProcessor {
-	private static String FFMPEGPath = "C:/PP_program/ffmpeg/ffmpeg-20160820-15dd56c-win64-static/bin";	//for testing
-	private static String videoSegmentationFilePath;	//for testing
-	
 	// time base = 1^(-3)s
+	private static VideoProcessor instance = new VideoProcessor();
 	
 	private static ArrayList<KeyFrame> allKeyFrames = new ArrayList<>(); 
 	
@@ -49,7 +45,7 @@ public class VideoProcessor {
 	
 	private static boolean extractKeyFrameInfo(String videoPath) {
 		File videoSegmentationFile = new File(VideoProcessor.class.getResource("/video_segmentation/video_segmentation.exe").getFile());
-		videoSegmentationFilePath = videoSegmentationFile.getAbsolutePath();
+		String videoSegmentationFilePath = videoSegmentationFile.getAbsolutePath();
 		
 		if (!requiredDocsExist(videoPath)) {
 			System.out.println("Extracting key frame information...");
@@ -97,11 +93,11 @@ public class VideoProcessor {
 	 */
 	private static boolean extractSRT(String videoPath) {
 		File ffmpegFile = new File(VideoProcessor.class.getResource("/ffmpeg/ffmpeg.exe").getFile());
-		FFMPEGPath = ffmpegFile.getAbsolutePath();
+		String ffmpegPath = ffmpegFile.getAbsolutePath();
 		
 		// build process with command for extracting 1st subtitle stream from video (mp4 format), output file name=sub.srt, auto-overwrite
 		try {
-			ProcessBuilder pb = new ProcessBuilder(FFMPEGPath, "-i", videoPath, "-an", "-vn", "-c:s:0", "srt", "-y", "sub.srt");
+			ProcessBuilder pb = new ProcessBuilder(ffmpegPath, "-i", videoPath, "-an", "-vn", "-c:s:0", "srt", "-y", "sub.srt");
 			pb.redirectOutput(Redirect.INHERIT);
 			pb.redirectError(Redirect.PIPE);
 			Process p = pb.start();
@@ -124,7 +120,7 @@ public class VideoProcessor {
 		return allKeyFrames.size();
 	}
 	
-	public static ArrayList<KeyFrame> extractKeyFrames(String videoPath) {
+	private static ArrayList<KeyFrame> extractKeyFrames(String videoPath) {
 		File opencvDll = new File(VideoProcessor.class.getResource("/opencv/opencv_java310.dll").getFile());
 		String openCVPath = opencvDll.getAbsolutePath();
 		System.load(openCVPath);
@@ -185,7 +181,6 @@ public class VideoProcessor {
 		
 		ArrayList<Subtitle> allSubtitles = SubtitleProcessor.getAllRawSubtitles();
 		VideoCapture vid = new VideoCapture(videoPath);
-		int counter = 0;
 		Mat opencvImg = new Mat();
 		if (!vid.isOpened()) {
 			System.out.println("error open video");
@@ -209,14 +204,11 @@ public class VideoProcessor {
 				}
 				System.out.printf("Detecting speaker face ... %d%%\n", 
 						(int) Math.floor(vid.get(Videoio.CAP_PROP_POS_FRAMES ) / vid.get(Videoio.CAP_PROP_FRAME_COUNT) * 100));
-				Face speakerFace = SpeakerDetector.detectSpeakerFace(interFrames);
-				if (speakerFace != null) {
-					Speaker speaker = new Speaker(speakerFace);
+				subtitle.setSpeaker(SpeakerDetector.detectSpeaker(interFrames));
+				if (subtitle.getSpeaker() != null) {
 					System.out.println("speaker detected");
-					subtitle.setSpeaker(speaker);
 				} else {
 					System.out.println("no speaker");
-					subtitle.setSpeaker(null);
 				}
 			}
 		}

@@ -7,19 +7,13 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.LineBreakMeasurer;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 
-import manga.process.subtitle.SubtitleProcessor;
-import pixelitor.Composition;
 import pixelitor.history.AddToHistory;
 import pixelitor.layers.ImageLayer;
-import pixelitor.layers.Layer;
 import pixelitor.layers.MangaText;
-import pixelitor.tools.ShapeType;
 import pixelitor.tools.shapes.WordBalloon;
 
 /**

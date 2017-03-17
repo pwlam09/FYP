@@ -4,24 +4,14 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
-import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 import org.opencv.objdetect.Objdetect;
@@ -57,7 +47,7 @@ public class SpeakerDetector {
 				SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_mouth.xml").getPath().substring(1));
 	}
 	
-	public static Face detectSpeakerFace(ArrayList<Mat> imgs) {
+	public static Speaker detectSpeaker(ArrayList<Mat> imgs) {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
 		ArrayList<Face> allFaces = new ArrayList<>();
@@ -111,19 +101,15 @@ public class SpeakerDetector {
 		Face speakerFace = getSpeakerFace(groupPossibleFaces(allFaces));
 		Mat img = null;
 		Rect speakerMouthBound = null;
+		Speaker speaker = null;
 		if (speakerFace != null) {
 			img = speakerFace.getImg();
 			if (speakerFace.getMouth() != null) {
 				speakerMouthBound = speakerFace.getMouth().getBound();
 			}
+			speaker = new Speaker(speakerFace);
 		}
-//        String filename = String.format("output%d.jpg", subtitleCounter);
-//        System.out.println(String.format("Writing %s", filename));
-//        if (img != null) {
-//            Imgcodecs.imwrite(filename, img);
-//        }
-		
-		return speakerFace;
+		return speaker;
 	}
 
 	private static HashMap<Face, ArrayList<Face>> groupPossibleFaces(ArrayList<Face> allFaces) {

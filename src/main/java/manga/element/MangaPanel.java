@@ -122,6 +122,7 @@ public class MangaPanel {
 			
 //				System.out.println("selectedSpeakerRef: "+selectedSpeakerRef);
 			
+			// Relocate speaker position relative to cropped panel image
 			Face relocatedSpeakerFace = null;
 			Face matchedSpeakerFace = null;
 			
@@ -199,19 +200,19 @@ public class MangaPanel {
 			// update balloon text bound with drag
 			balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
 			
-			// testing
-			// draw balloon bound
-			Rectangle2D boundToDraw = balloonRef.getBounds2D();
-//				System.out.println("boundToDraw: "+boundToDraw);
-			Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
-					new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
-							boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
-					new Scalar(0, 0, 255));
-			// draw tail direction point
-			Point2D dragEndPt = balloonDrag.getEndPoint();
-			Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
-					new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
-			// testing
+//			// testing
+//			// draw balloon bound
+//			Rectangle2D boundToDraw = balloonRef.getBounds2D();
+////				System.out.println("boundToDraw: "+boundToDraw);
+//			Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
+//					new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
+//							boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
+//					new Scalar(0, 0, 255));
+//			// draw tail direction point
+//			Point2D dragEndPt = balloonDrag.getEndPoint();
+//			Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
+//					new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
+//			// testing
 			
 			// testing
 			String filename = String.format("balloon%d.jpg", ++imgCounter);
@@ -248,60 +249,60 @@ public class MangaPanel {
 	 * Match the speaker face with the faces in key frame.
 	 */
 	private Face matchSpeakerFace(Face relocatedSpeakerFace, ArrayList<Face> relocatedFaces) {
-		if (relocatedFaces.size() == 0 || relocatedSpeakerFace == null) {
+		if ((relocatedFaces.isEmpty() || relocatedFaces.size() == 0) && relocatedSpeakerFace == null) {
 			// if no match
 			return null;
 		} else {
-//			Face matchedFace = null;
-//			
-//			if (relocatedSpeakerFace == null) {
-//				// return largest detected face
-//				double maxArea = 0.0;
-//				for (Face face : relocatedFaces) {
-//					if (face.getBound().area() > maxArea) {
-//						maxArea = face.getBound().area();
-//						matchedFace = face;
-//					}
-//				}
-//			} else {
-//				// return match with largest intersection
-//				Rect speakerFaceBound = relocatedSpeakerFace.getBound();
-//				Rectangle2D speakerFaceRect2D = new Rectangle2D.Double(speakerFaceBound.x, speakerFaceBound.y, speakerFaceBound.width, speakerFaceBound.height);
-//				
-//				double maxArea = 0.0;
-//				matchedFace = relocatedFaces.get(0);
-//				
-//				for (Face relocatedFace : relocatedFaces) {
-//					Rect currFaceBound = relocatedFace.getBound();
-//					Rectangle2D relocatedFaceRect2D = new Rectangle2D.Double(currFaceBound.x, currFaceBound.y, currFaceBound.width, currFaceBound.height);
-//					Rectangle2D intersection = speakerFaceRect2D.createIntersection(relocatedFaceRect2D);
-//					if (intersection.getWidth() * intersection.getHeight() > maxArea) {
-//						maxArea = intersection.getWidth() * intersection.getHeight();
-//						matchedFace = relocatedFace;
-//					}
-//				}
-//			}
-
-			/**
-			 *  return match with largest intersection
-			 */
 			Face matchedFace = null;
 			
-			Rect speakerFaceBound = relocatedSpeakerFace.getBound();
-			Rectangle2D speakerFaceRect2D = new Rectangle2D.Double(speakerFaceBound.x, speakerFaceBound.y, speakerFaceBound.width, speakerFaceBound.height);
-			
-			double maxArea = 0.0;
-			matchedFace = relocatedFaces.get(0);
-			
-			for (Face relocatedFace : relocatedFaces) {
-				Rect currFaceBound = relocatedFace.getBound();
-				Rectangle2D relocatedFaceRect2D = new Rectangle2D.Double(currFaceBound.x, currFaceBound.y, currFaceBound.width, currFaceBound.height);
-				Rectangle2D intersection = speakerFaceRect2D.createIntersection(relocatedFaceRect2D);
-				if (intersection.getWidth() * intersection.getHeight() > maxArea) {
-					maxArea = intersection.getWidth() * intersection.getHeight();
-					matchedFace = relocatedFace;
+			if (relocatedSpeakerFace == null) {
+				// return largest detected face
+				double maxArea = 0.0;
+				for (Face face : relocatedFaces) {
+					if (face.getBound().area() > maxArea) {
+						maxArea = face.getBound().area();
+						matchedFace = face;
+					}
+				}
+			} else if (relocatedFaces.size() > 0) {
+				// return match with largest intersection
+				Rect speakerFaceBound = relocatedSpeakerFace.getBound();
+				Rectangle2D speakerFaceRect2D = new Rectangle2D.Double(speakerFaceBound.x, speakerFaceBound.y, speakerFaceBound.width, speakerFaceBound.height);
+				
+				double maxArea = 0.0;
+				matchedFace = relocatedFaces.get(0);
+				
+				for (Face relocatedFace : relocatedFaces) {
+					Rect currFaceBound = relocatedFace.getBound();
+					Rectangle2D relocatedFaceRect2D = new Rectangle2D.Double(currFaceBound.x, currFaceBound.y, currFaceBound.width, currFaceBound.height);
+					Rectangle2D intersection = speakerFaceRect2D.createIntersection(relocatedFaceRect2D);
+					if (intersection.getWidth() * intersection.getHeight() > maxArea) {
+						maxArea = intersection.getWidth() * intersection.getHeight();
+						matchedFace = relocatedFace;
+					}
 				}
 			}
+
+			/**
+			 *  return match with largest intersection (if both speaker face and panel image faces available)
+			 */
+//			Face matchedFace = null;
+//			
+//			Rect speakerFaceBound = relocatedSpeakerFace.getBound();
+//			Rectangle2D speakerFaceRect2D = new Rectangle2D.Double(speakerFaceBound.x, speakerFaceBound.y, speakerFaceBound.width, speakerFaceBound.height);
+//			
+//			double maxArea = 0.0;
+//			matchedFace = relocatedFaces.get(0);
+//			
+//			for (Face relocatedFace : relocatedFaces) {
+//				Rect currFaceBound = relocatedFace.getBound();
+//				Rectangle2D relocatedFaceRect2D = new Rectangle2D.Double(currFaceBound.x, currFaceBound.y, currFaceBound.width, currFaceBound.height);
+//				Rectangle2D intersection = speakerFaceRect2D.createIntersection(relocatedFaceRect2D);
+//				if (intersection.getWidth() * intersection.getHeight() > maxArea) {
+//					maxArea = intersection.getWidth() * intersection.getHeight();
+//					matchedFace = relocatedFace;
+//				}
+//			}
 		
 			return matchedFace;
 		}
@@ -429,6 +430,8 @@ public class MangaPanel {
 				}
 				newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
 			}
+		} else {
+			
 		}
 		
 		/**

@@ -1074,12 +1074,12 @@ public class SubtitleCompressor {
 		}
 	}
 	
-	public static WordPosTuple getNext(ArrayList<WordPosTuple> wordList, int idx) {
+	private static WordPosTuple getNext(ArrayList<WordPosTuple> wordList, int idx) {
 	    if (idx < 0 || idx+1 >= wordList.size()) return null;
 	    return wordList.get(idx + 1);
 	}
 
-	public static WordPosTuple getPrevious(ArrayList<WordPosTuple> wordList, int idx) {
+	private static WordPosTuple getPrevious(ArrayList<WordPosTuple> wordList, int idx) {
 	    if (idx <= 0) return null;
 	    return wordList.get(idx - 1);
 	}
