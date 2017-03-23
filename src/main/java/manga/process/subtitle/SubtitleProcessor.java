@@ -117,7 +117,8 @@ public class SubtitleProcessor {
 	public static void printAllProcessedSubtitles() {
 		int subtitleCounter = 0;
 		for (Subtitle subtitle : allProcessedSubtitles) {
-			System.out.printf("Processed Subtitle %d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
+//			System.out.printf("Processed Subtitle %d sTime:%f eTime:%f text:%s\n", ++subtitleCounter, subtitle.getsTime() ,subtitle.geteTime(), subtitle.getText());
+			System.out.printf("Processed Subtitle: %s\n", subtitle.getText());
 		}
 	}
 
@@ -216,7 +217,7 @@ public class SubtitleProcessor {
 							i++;
 						}
 					}
-					
+					System.out.println("Grouped subtitle: "+Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker));
 					summarizedSubtitle = SubtitleCompressor.summarizeSubtitles(subtitlesOfSameSpeaker);
 					summarizedSubtitles.add(summarizedSubtitle);
 				}

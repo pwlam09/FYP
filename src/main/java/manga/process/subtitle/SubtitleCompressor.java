@@ -399,7 +399,7 @@ public class SubtitleCompressor {
 		for (GraphPath<WordPosTuple, CustomEdge> path : kshortestpaths) {
 			double normalizedScore = (double) path.getWeight() / (double) path.getLength();
 			pathScoreMap.put(path, normalizedScore);
-			System.out.printf("%f %s\n", normalizedScore, graphPathToText(path));
+//			System.out.printf("%f %s\n", normalizedScore, graphPathToText(path));
 		}
 		
 		// compute compression with highest score

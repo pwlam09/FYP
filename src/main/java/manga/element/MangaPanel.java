@@ -72,7 +72,7 @@ public class MangaPanel {
      */
     public void fitImageToPanelBound() {
         if (keyFrame != null) {
-        	// setup selection with the bounding rectangle of MangaPanel
+        	// Setup selection with the bounding rectangle of MangaPanel
         	Composition comp = page.getComp();
             Selection selection = new Selection(bound, comp.getIC());
             comp.setNewSelection(selection);
@@ -80,11 +80,12 @@ public class MangaPanel {
 	        panelImg = new MangaPanelImage(comp, keyFrame.getImg(), bound, SpeakerDetector.detectFaces(keyFrame.getImg()));
 
 	        // testing
-    		String filename = String.format("output%d.jpg", ++imgCounter);
-    		System.out.println(String.format("Writing %s", filename));
-    		Imgcodecs.imwrite(filename, keyFrame.getImg());
+//    		String filename = String.format("output%d.jpg", ++imgCounter);
+//    		System.out.println(String.format("Writing %s", filename));
+//    		Imgcodecs.imwrite(filename, keyFrame.getImg());
+    		// testing
 	        
-	        // image to new layer
+	        // Image to new layer
 	        ImageLayer layer = panelImg.getLayer();
 	        
 	        layer.setImageWithSelection(panelImg.getSubImageAsBufferedImage());
@@ -98,16 +99,15 @@ public class MangaPanel {
 		String linkedSubtitlesText = "";
 		
 		if (subtitles.size() > 0) {
-			// assume all from same speaker
+			// Assume all from same speaker
 			ArrayList<Subtitle> subtitlesOfSameSpeaker = new ArrayList<>();
 			subtitlesOfSameSpeaker = subtitles;
 			
 			linkedSubtitlesText = Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker);
-//			System.out.println("linkedSubtitlesText: "+linkedSubtitlesText);
 			
-			// select the first subtitle with non-null speaker (if more than one) as reference
-			// or the speaker of the only subtitle
-			// both case may have null speaker
+			// Select the first subtitle with non-null speaker (if more than one) as reference
+			// or the speaker of the only subtitle.
+			// Both case may have null speaker.
 			Speaker selectedSpeakerRef = null;
 			if (subtitlesOfSameSpeaker.size() > 1) {
 				for (Subtitle subtitle : subtitlesOfSameSpeaker) {
@@ -120,8 +120,6 @@ public class MangaPanel {
 				selectedSpeakerRef = subtitlesOfSameSpeaker.get(0).getSpeaker();
 			}
 			
-//				System.out.println("selectedSpeakerRef: "+selectedSpeakerRef);
-			
 			// Relocate speaker position relative to cropped panel image
 			Face relocatedSpeakerFace = null;
 			Face matchedSpeakerFace = null;
@@ -130,25 +128,21 @@ public class MangaPanel {
 				relocatedSpeakerFace = panelImg.relocateFace(selectedSpeakerRef.getFace());
 			}
 
-			// match speaker's face to face of current panel image.
-			// if not found, the largest face of panel image detected will be used
+			// Match speaker's face to face of current panel image.
+			// If not found, the largest face of panel image detected will be used
 			matchedSpeakerFace = matchSpeakerFace(relocatedSpeakerFace, panelImg.getRelocatedFaces());
-//				System.out.println("matchedSpeakerFace: "+matchedSpeakerFace);
 			
 	    	Composition comp = page.getComp();
 	    	
 	    	UserDrag balloonDrag = null;
 	    	
-			// this font will be used to calculate the area required for displaying the subtitle text in this font
+			// This font will be used to calculate the area required for displaying the subtitle text in this font
 	    	Font defaultFont = new Font(Font.SANS_SERIF, Font.BOLD, 14);
 			
-	    	// calculate the balloon size for displaying subtitle text
-	    	WordBalloon balloonRef = MangaBalloon.calculateInitWordBalloonRef(bound.getX(), bound.getY(), defaultFont, linkedSubtitlesText);
-//				System.out.println("balloonRef bound after cal textbound: "+balloonRef.getBounds2D());
+	    	// Calculate the balloon size for displaying subtitle text
+	    	WordBalloon balloonRef = MangaBalloon.calculateInitWordBalloonRef(bound, matchedSpeakerFace, defaultFont, linkedSubtitlesText);
 	    	
-//		    	System.out.println("balloonRef before cal: "+balloonRef.getBounds2D());
 			balloonRef = calculateBalloonPos(balloonRef, matchedSpeakerFace, panelImg.getRelocatedFaces());
-//				System.out.println("balloonRef after cal: "+balloonRef.getBounds2D());
 			
 			Point balloonTailPt = null;
 			
@@ -160,50 +154,61 @@ public class MangaPanel {
 				balloonTailPt = calculateBalllonTailPos(null);
 			} else {
 				if (matchedSpeakerFace.getMouth() == null) {
-					// if mouth position not available, point to face
-					balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getBound());
+					// If mouth position not available, point to estimated mouth region
+					
+					Rect matchedSpeakerFaceBound = matchedSpeakerFace.getBound();
+					// Estimate mouth region
+					Rect speakerMouthBound = new Rect(
+							(int) (matchedSpeakerFaceBound.x+matchedSpeakerFaceBound.width/4.0), 
+							(int) (matchedSpeakerFaceBound.y+matchedSpeakerFaceBound.height*2.0/3.0), 
+							(int) (matchedSpeakerFaceBound.width/2.0), 
+							(int) (matchedSpeakerFaceBound.height*1.0/6.0));
+					
+					balloonTailPt = calculateBalllonTailPos(speakerMouthBound);
 
 					// testing
 					// draw face rect
-					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
-					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
-							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
-					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
+//					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
+//					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
+//							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
+//					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+//							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
+//					// draw estimated mouth rect
+//					Rect mouthBoundToDraw = speakerMouthBound;
+//					Imgproc.rectangle(testOutputImg, new Point(mouthBoundToDraw.x, mouthBoundToDraw.y), 
+//							new Point(mouthBoundToDraw.x+mouthBoundToDraw.width, mouthBoundToDraw.y+mouthBoundToDraw.height), new Scalar(0, 255, 255));
+//					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+//							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 255), 5);
 					// testing
 				} else {
 					balloonTailPt = calculateBalllonTailPos(matchedSpeakerFace.getMouth().getBound());
 
 					// testing						
 					// draw face rect
-					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
-					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
-							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
-					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
-					// draw mouth rect
-					Rect mouthBoundToDraw = matchedSpeakerFace.getMouth().getBound();
-					Imgproc.rectangle(testOutputImg, new Point(mouthBoundToDraw.x, mouthBoundToDraw.y), 
-							new Point(mouthBoundToDraw.x+mouthBoundToDraw.width, mouthBoundToDraw.y+mouthBoundToDraw.height), new Scalar(255, 0, 0));
-					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
-							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
+//					Rect faceBoundToDraw = matchedSpeakerFace.getBound();
+//					Imgproc.rectangle(testOutputImg, new Point(faceBoundToDraw.x, faceBoundToDraw.y), 
+//							new Point(faceBoundToDraw.x+faceBoundToDraw.width, faceBoundToDraw.y+faceBoundToDraw.height), new Scalar(0, 255, 0));
+//					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+//							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(0, 255, 0), 5);
+//					// draw mouth rect
+//					Rect mouthBoundToDraw = matchedSpeakerFace.getMouth().getBound();
+//					Imgproc.rectangle(testOutputImg, new Point(mouthBoundToDraw.x, mouthBoundToDraw.y), 
+//							new Point(mouthBoundToDraw.x+mouthBoundToDraw.width, mouthBoundToDraw.y+mouthBoundToDraw.height), new Scalar(255, 0, 0));
+//					Imgproc.line(testOutputImg, new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), 
+//							new Point(balloonTailPt.x-bound.getX(), balloonTailPt.y-bound.getY()), new Scalar(255, 0, 0), 5);
 					// testing
 				}
 			}
 			
-//				System.out.println("final balloonRef before drag: "+balloonRef.getBounds2D());
-			
-			// determine balloon drawing direction
+			// Determine balloon drawing direction
 			balloonDrag = createUserDragFromShape(balloonRef, balloonTailPt);
-//				System.out.println("balloonDrag: "+balloonDrag);
 			
-			// update balloon text bound with drag
+			// Update balloon text bound with drag
 			balloonRef = (WordBalloon) ShapeType.WORDBALLOON.getShape(balloonDrag);
 			
-//			// testing
-//			// draw balloon bound
+			// testing
+			// draw balloon bound
 //			Rectangle2D boundToDraw = balloonRef.getBounds2D();
-////				System.out.println("boundToDraw: "+boundToDraw);
 //			Imgproc.rectangle(testOutputImg, new Point(boundToDraw.getX()-bound.getX(), boundToDraw.getY()-bound.getY()), 
 //					new Point(boundToDraw.getX()-bound.getX()+Math.abs(boundToDraw.getWidth()), 
 //							boundToDraw.getY()-bound.getY()+Math.abs(boundToDraw.getHeight())), 
@@ -212,35 +217,35 @@ public class MangaPanel {
 //			Point2D dragEndPt = balloonDrag.getEndPoint();
 //			Imgproc.line(testOutputImg, new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()),
 //					new Point(dragEndPt.getX()-bound.getX(), dragEndPt.getY()-bound.getY()), new Scalar(0, 0, 255), 5);
-//			// testing
+			// testing
 			
 			// testing
-			String filename = String.format("balloon%d.jpg", ++imgCounter);
-			System.out.println(String.format("Writing %s", filename));
-			Imgcodecs.imwrite(filename, testOutputImg);
+//			String filename = String.format("balloon%d.jpg", ++imgCounter);
+//			System.out.println(String.format("Writing %s", filename));
+//			Imgcodecs.imwrite(filename, testOutputImg);
 			// testing
 			
 	    	MangaText mangaTextLayer = new MangaText(comp, balloonRef);
 	    	mangaTextLayer.setAndCommitDefaultSetting(defaultFont, linkedSubtitlesText);
 	    	
-	        // set text translation within balloon bound
+	        // Set text translation within balloon bound
 	    	mangaTextLayer.setTranslation((int)balloonRef.getTextBound2D().getX(), (int)balloonRef.getTextBound2D().getY());
 	    	
 	    	MangaBalloon balloon = new MangaBalloon(this, mangaTextLayer, balloonRef);
 	    	balloons.add(balloon);
 	    	
-			// initialize shapes tool for drawing balloon
+			// Initialize shapes tool for drawing balloon
 	    	ShapesTool shapesTool = Tools.SHAPES;
-	        // call reset method or the previous stroke will be used
+	        // Call reset method or the previous stroke will be used
 	        shapesTool.resetDrawingAndStroke();
 	        shapesTool.setShapeType(ShapeType.WORDBALLOON);
 	        shapesTool.setAction(ShapesAction.FILL_AND_STROKE);
 	        shapesTool.setStrokFill(TwoPointBasedPaint.FOREGROUND);
 	        shapesTool.setFill(TwoPointBasedPaint.BACKGROUND);
-	        // reset stroke join and width to default
+	        // Reset stroke join and width to default
 	        shapesTool.setStrokeJoinAndWidth(BasicStrokeJoin.ROUND, 1);
 	        
-	        // paint balloon
+	        // Paint balloon
 	    	shapesTool.paintShapeOnIC(balloon.getBallloonLayer(), balloonDrag);
 		}
     }
@@ -249,14 +254,14 @@ public class MangaPanel {
 	 * Match the speaker face with the faces in key frame.
 	 */
 	private Face matchSpeakerFace(Face relocatedSpeakerFace, ArrayList<Face> relocatedFaces) {
-		if ((relocatedFaces.isEmpty() || relocatedFaces.size() == 0) && relocatedSpeakerFace == null) {
-			// if no match
+		if (relocatedFaces.isEmpty() || relocatedFaces.size() == 0) {
+			// If no face detected
 			return null;
 		} else {
 			Face matchedFace = null;
 			
 			if (relocatedSpeakerFace == null) {
-				// return largest detected face
+				// Return largest detected face
 				double maxArea = 0.0;
 				for (Face face : relocatedFaces) {
 					if (face.getBound().area() > maxArea) {
@@ -265,7 +270,7 @@ public class MangaPanel {
 					}
 				}
 			} else if (relocatedFaces.size() > 0) {
-				// return match with largest intersection
+				// Return match with largest intersection
 				Rect speakerFaceBound = relocatedSpeakerFace.getBound();
 				Rectangle2D speakerFaceRect2D = new Rectangle2D.Double(speakerFaceBound.x, speakerFaceBound.y, speakerFaceBound.width, speakerFaceBound.height);
 				
@@ -284,7 +289,7 @@ public class MangaPanel {
 			}
 
 			/**
-			 *  return match with largest intersection (if both speaker face and panel image faces available)
+			 *  Return match with largest intersection (if both speaker face and panel image faces available)
 			 */
 //			Face matchedFace = null;
 //			
@@ -336,33 +341,33 @@ public class MangaPanel {
 		double newBalloonRefH = newBalloonRef.getBounds().getHeight();
 		
 		/**
-		 * greedy approach: place balloons from top-left to bottom-right
+		 * Greedy approach: place balloons from top-left to bottom-right
 		 */
-		if (balloons.size() > 0) {
-			WordBalloon previousBalloonRef = balloons.get(balloons.size()-1).getBalloonRef();
-			Rectangle2D previousWordBound = previousBalloonRef.getBounds2D();
-			newBalloonX = previousWordBound.getMaxX();
-			if (previousWordBound.getMaxX() + newBalloonRef.getBounds2D().getWidth() < bound.getMaxX()) {
-				// place balloon next to previous balloon
-				newBalloonY = previousWordBound.getY();
-			} else {
-				// place balloon below all balloons
-				newBalloonX = bound.getX();
-				double maxAvailableY = 0.0;
-				for (int j=0; j<balloons.size(); j++) {
-					Rectangle2D tempBalloonRefBound = balloons.get(j).getBalloonRef().getBounds(); 
-					if (tempBalloonRefBound.getMaxY() > maxAvailableY) {
-						maxAvailableY = tempBalloonRefBound.getMaxY();
-					}
-				}
-				newBalloonY = maxAvailableY;
-			}
-			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
-		}
+//		if (balloons.size() > 0) {
+//			WordBalloon previousBalloonRef = balloons.get(balloons.size()-1).getBalloonRef();
+//			Rectangle2D previousWordBound = previousBalloonRef.getBounds2D();
+//			newBalloonX = previousWordBound.getMaxX();
+//			if (previousWordBound.getMaxX() + newBalloonRef.getBounds2D().getWidth() < bound.getMaxX()) {
+//				// place balloon next to previous balloon
+//				newBalloonY = previousWordBound.getY();
+//			} else {
+//				// place balloon below all balloons
+//				newBalloonX = bound.getX();
+//				double maxAvailableY = 0.0;
+//				for (int j=0; j<balloons.size(); j++) {
+//					Rectangle2D tempBalloonRefBound = balloons.get(j).getBalloonRef().getBounds(); 
+//					if (tempBalloonRefBound.getMaxY() > maxAvailableY) {
+//						maxAvailableY = tempBalloonRefBound.getMaxY();
+//					}
+//				}
+//				newBalloonY = maxAvailableY;
+//			}
+//			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
+//		}
 		
 		/**
-		 * avoid all possible speakers' faces in the panel, 
-		 * not using because only one speaker face assumed at a time
+		 * Avoid all possible speakers' faces in the panel, 
+		 * Not using because only one speaker face assumed at a time
 		 */
 //		for (Face face : relocatedFaces) {
 //			Rect faceRect = face.getBound();
@@ -402,49 +407,64 @@ public class MangaPanel {
 //		}
 		
 		/**
-		 * avoid current speaker face, assumed only one speaker
+		 * Avoid current speaker face, assumed only one speaker
 		 */
 		if (matchedSpeakerFace != null) {
-			Rect speakerFaceRect = matchedSpeakerFace.getBound();
-//			System.out.println("current resized face rect: "+matchedSpeakerFace.getBound());
-			// relocate face coordinates based on panel position
-			double faceConvertedRectX = speakerFaceRect.x+bound.getX();
-			double faceConvertedRectY = speakerFaceRect.y+bound.getY();
-			Rectangle2D faceConvertedRect = new Rectangle2D.Double(faceConvertedRectX, faceConvertedRectY, speakerFaceRect.width, speakerFaceRect.height);
+			Rect speakerFaceBound = matchedSpeakerFace.getBound();
+
+			// Relocate face coordinates based on panel position
+			Rectangle2D refRect = new Rectangle2D.Double(bound.getX()+speakerFaceBound.x, bound.getY()+speakerFaceBound.y, 
+					speakerFaceBound.width, speakerFaceBound.height);
 			
-			// if face is within panel bound
-			if (bound.intersects(faceConvertedRect)) {
-//				System.out.println("intersected face rect: "+faceConvertedRect);
-				// if balloon occludes face
-				if (newBalloonRef.intersects(faceConvertedRect)) {		
-					if (bound.getMaxX()-faceConvertedRect.getMaxX() >= newBalloonRefW) {
-						// place right to face
-						newBalloonX = faceConvertedRect.getMaxX();
-					} else if (faceConvertedRect.getX()-bound.getX() >= newBalloonRefW) {
-						// place left to face
-						newBalloonX = faceConvertedRect.getX()-newBalloonRefW;
-					} else {
-						// place below face
-						newBalloonY = faceConvertedRect.getMaxY();
-					}
+			if (bound.intersects(refRect)) {
+				if (matchedSpeakerFace.getMouth() != null) {
+					Rect speakerMouthBound = matchedSpeakerFace.getMouth().getBound();
+					refRect = new Rectangle2D.Double(
+							bound.getX()+speakerMouthBound.x, 
+							bound.getY()+speakerFaceBound.y, 
+							speakerMouthBound.width, 
+							speakerMouthBound.y-speakerFaceBound.y+speakerMouthBound.height/2);
+				} else {
+					// Estimate mouth region
+					Rectangle2D speakerMouthBound = new Rectangle2D.Double(
+							speakerFaceBound.x+speakerFaceBound.width/4.0, 
+							speakerFaceBound.y+speakerFaceBound.height*2.0/3.0, 
+							speakerFaceBound.width/2.0, 
+							speakerFaceBound.height*1.0/6.0);
+					refRect = new Rectangle2D.Double(
+							bound.getX()+speakerMouthBound.getX(), 
+							bound.getY()+speakerFaceBound.y, 
+							speakerMouthBound.getWidth(), 
+							speakerMouthBound.getY()-speakerFaceBound.y+speakerMouthBound.getHeight()/2);
+				}
+				
+				if (bound.getMaxX()-refRect.getMaxX() >= newBalloonRefW) {
+					// Place right to face
+					newBalloonX = refRect.getMaxX();
+					newBalloonY = refRect.getMaxY()-newBalloonRefH;
+				} else if (refRect.getX()-bound.getX() >= newBalloonRefW) {
+					// Place left to face
+					newBalloonX = refRect.getX()-newBalloonRefW;
+					newBalloonY = refRect.getMaxY()-newBalloonRefH;
+				} else {
+					// Place below face
+					newBalloonY = refRect.getMaxY();
 				}
 				newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
 			}
-		} else {
-			
 		}
 		
 		/**
-		 *  ensure balloon within panel, may cover face
+		 *  Ensure balloon within panel, may cover face
 		 */
-		if (newBalloonRef.getBounds2D().getMaxX() > bound.getMaxX()) {
-			newBalloonX = bound.getMaxX()-newBalloonRefW;
-			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
-		}
-		if (newBalloonRef.getBounds2D().getMaxY() > bound.getMaxY()) {
-			newBalloonY = bound.getMaxY()-newBalloonRefH;
-			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
-		}
+//		if (newBalloonRef.getBounds2D().getMaxX() > bound.getMaxX()) {
+//			newBalloonX = bound.getMaxX()-newBalloonRefW;
+//			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
+//		}
+//		if (newBalloonRef.getBounds2D().getMaxY() > bound.getMaxY()) {
+//			newBalloonY = bound.getMaxY()-newBalloonRefH;
+//			newBalloonRef = new WordBalloon(newBalloonX, newBalloonY, newBalloonRefW, newBalloonRefH);
+//		}
 		
 		return newBalloonRef;
 	}
@@ -463,7 +483,7 @@ public class MangaPanel {
 		    return new UserDrag(balloonBound.getX(), balloonBound.getY(), 
 		    		balloonBound.getX()+balloonBound.getWidth(), balloonBound.getY()+balloonBound.getHeight());
 		} else {
-			// calculate the 4 points of word balloon and
+			// Calculate the 4 points of word balloon and
 			// use the closet one to the balloon tail point
 			// as the end of drag
 			Point topLeftPt = new Point(balloonBound.getX(), balloonBound.getY());

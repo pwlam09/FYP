@@ -21,7 +21,6 @@ import org.opencv.objdetect.Objdetect;
  *	Detect speaker in image
  */
 public class SpeakerDetector {
-	private static int subtitleCounter = 0;	//testing
 	private static int absoluteFaceSize = 0;
 	private static SpeakerDetector instance = new SpeakerDetector();
 	private static CascadeClassifier frontalFaceDetector;
@@ -47,6 +46,11 @@ public class SpeakerDetector {
 				SpeakerDetector.class.getResource("/opencv/haarcascade_mcs_mouth.xml").getPath().substring(1));
 	}
 	
+	/**
+	 * Can be used detect speaker frames.
+	 * Not using because now assume the biggest detected
+	 * face in key frame image as the speaker's face.
+	 */
 	public static Speaker detectSpeaker(ArrayList<Mat> imgs) {
 		System.load(SpeakerDetector.class.getResource("/opencv/opencv_java310.dll").getPath().substring(1));
 		
@@ -54,8 +58,6 @@ public class SpeakerDetector {
 		ArrayList<CascadeClassifier> faceCascadeClassfiers = new ArrayList<>();
 		faceCascadeClassfiers.add(frontalFaceDetector);
 		faceCascadeClassfiers.add(profileFaceDetector);
-		
-		subtitleCounter++;
 		
 		for (int i=0; i<imgs.size(); i++) {
 			// detect both frontal face and profile face from each image
@@ -74,7 +76,6 @@ public class SpeakerDetector {
 				}
 				faceCascadeClassfier.detectMultiScale(grayImg, faceDetections, 1.1, 1, 0 | Objdetect.CASCADE_SCALE_IMAGE,
 		        		new Size(absoluteFaceSize, absoluteFaceSize), new Size());
-//		        System.out.println("face array size: "+faceDetections.toArray().length);
 		        for (Rect faceRect : faceDetections.toArray()) {
 		        	Face face = null;
 		        	Rect detectedMouthBound = detectMouth(grayImg, faceRect);
@@ -207,64 +208,6 @@ public class SpeakerDetector {
 			}
 		}
 		return selectedFace;
-		
-		
-		// *****************failed attempt to analyze lip movement*****************
-//		HashMap<Face, Double> faceMSEMap = new HashMap<>();
-//		
-//		for (Map.Entry<Face, ArrayList<Face>> faceEntry : faceMap.entrySet()) {
-//			Face keyFace = faceEntry.getKey();
-//			Mat keyImg = keyFace.getImg();
-//			Mouth keyFaceMouth = keyFace.getMouth();
-//			
-//			ArrayList<Face> groupedFaces = faceEntry.getValue();
-//
-//			// resize grouped faces of each key face to calculate Mean Squared Difference (MSD)
-//			Mouth mouthRef = keyFaceMouth;
-//			if (keyFaceMouth != null || (mouthRef = isMouthInGroupedFaces(groupedFaces)) != null) {
-//				if (keyFaceMouth == null) {
-//					keyFaceMouth = mouthRef;
-//				}
-//				Mat keyMouthImg = keyImg.submat(keyFaceMouth.getBound());
-//				HashMap<Face, Double> msdMap = new HashMap<>();
-//				
-//				for (Face groupedFace : groupedFaces) {
-//					if (groupedFace.getMouth() != null) {
-//						Mat absDiffResult = new Mat();
-//						Mat mouthImgResized = new Mat();
-//						Size keyFaceMouthSize = keyFaceMouth.getBound().size();
-//						Imgproc.resize(keyImg.submat(groupedFace.getMouth().getBound()), mouthImgResized, keyFaceMouthSize);
-//						Core.absdiff(keyMouthImg, mouthImgResized, absDiffResult);
-//						Scalar scalar = Core.sumElems(absDiffResult.mul(absDiffResult));
-//						double sse = scalar.val[0] + scalar.val[1] + scalar.val[2];
-//						double mse  = sse / (double)(keyMouthImg.channels() * keyMouthImg.total());
-//						msdMap.put(groupedFace, mse);
-//					}
-//				}
-//				Double maxMse = 0.0;
-//				for (Map.Entry<Face, Double> msdEntry : msdMap.entrySet()) {
-//					maxMse = Math.max(maxMse, msdEntry.getValue());
-//				}
-//				for (Map.Entry<Face, Double> msdEntry : msdMap.entrySet()) {
-//					if (maxMse == msdEntry.getValue()) {
-//						faceMSEMap.put(msdEntry.getKey(), maxMse);
-//						break;
-//					}
-//				}
-//			}
-//		}
-//
-//		Double maxMse = 0.0;
-//		for (Map.Entry<Face, Double> msdEntry : faceMSEMap.entrySet()) {
-//			maxMse = Math.max(maxMse, msdEntry.getValue());
-//		}
-//		for (Map.Entry<Face, Double> msdEntry : faceMSEMap.entrySet()) {
-//			if (maxMse == msdEntry.getValue()) {
-//				return msdEntry.getKey();
-//			}
-//		}
-		
-//		return null;
 	}
 	
 	private static boolean frontalFaceHasEyes(Mat img, Rect faceRect) {

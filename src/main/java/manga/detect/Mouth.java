@@ -15,8 +15,6 @@ public class Mouth {
 	}
 	
 	public Mouth(Mouth mouth, double x, double y) {
-//		System.out.println("mouth before relocate: "+mouth);
-//		System.out.println("relocated mouth: "+new Rect((int) (mouth.bound.x-x), (int) (mouth.bound.y-y), (int)(mouth.bound.width), (int)(mouth.bound.height)));
 		this.bound = new Rect((int) (mouth.bound.x-x), (int) (mouth.bound.y-y), (int)(mouth.bound.width), (int)(mouth.bound.height));
 	}
 

@@ -168,11 +168,6 @@ public class MangaPanelImage {
 		
 		Mat imgAfterCrop = scaledImg.submat(cropRect);
 		
-		// testing
-//		String filename = String.format("crop%d.jpg", imgCount);
-//		System.out.println(String.format("Writing %s", filename));
-//		Imgcodecs.imwrite(filename, imgAfterCrop);
-		
 		return imgAfterCrop;
 	}
 	

@@ -24,10 +24,6 @@ import pixelitor.utils.Messages;
  *
  */
 public class VideoFileChooser {
-//	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/outfile.mp4";	//for testing
-//	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/The_Imitation_Game/clip.mp4";	//for testing
-	private static final String TESTVIDEOPATH = "C:/PP_file/cityuFYP/dl_dvd/Spotlight/clip.mp4";	//for testing
-	
 	private static JFileChooser openFileChooser;
 	
 	private static File lastOpenDir = AppPreferences.loadLastOpenDir();
@@ -74,12 +70,11 @@ public class VideoFileChooser {
                  * initialize the settings for manga
                  */
                 MangaGenerator.preprocessing(selectedFile.getAbsolutePath());
-//                AudioProcessor.extractAudio();
             	MangaGenerator.addMangaPages();
             	MangaGenerator.setAndDrawMangaPanels();
-//            	SubtitleProcessor.printSubText();
-//            	SubtitleProcessor.printSubText(VideoProcessor.getCurrTimestamp(), VideoProcessor.getEndTimestamp());
-            	// balloon and text layer can be drawn at last to ensure they are on top of all layers, or they needed to be pushed to top layers
+				// Balloon and text layer can be drawn at last to ensure they
+				// are on top of all layers, or they needed to be pushed to top
+				// layers.
             	MangaGenerator.drawImgsToPanel();
             	MangaGenerator.drawWordBalloons();
             	MangaGenerator.pushBalloonsAndTextToTop();

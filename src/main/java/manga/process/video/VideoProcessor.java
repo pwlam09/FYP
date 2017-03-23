@@ -36,11 +36,8 @@ public class VideoProcessor {
 	public static void preprocessing(String videoPath) {
 		extractKeyFrameInfo(videoPath);
 		extractSRT(videoPath);
-		// store key frames for later use
+		// Store key frames for later use
 		allKeyFrames = extractKeyFrames(videoPath);
-//		for (KeyFrame keyFrame : allKeyFrames) {
-//			System.out.println(keyFrame);
-//		}
 	}
 	
 	private static boolean extractKeyFrameInfo(String videoPath) {
@@ -55,7 +52,7 @@ public class VideoProcessor {
 				pb.redirectError(Redirect.PIPE);
 				Process p = pb.start();
 				p.waitFor();
-				// ffmpeg prints result to stderr, redirect to stdout
+				// FFmpeg prints result to stderr, redirect to stdout
 				BufferedReader err_reader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
 				String err_ine;
 				while ((err_ine = err_reader.readLine()) != null) {
@@ -89,13 +86,13 @@ public class VideoProcessor {
 	}
 
 	/**
-	 * extract 1st subtitle stream (SRT format) from mp4 video
+	 * Extract 1st subtitle stream (SRT format) from mp4 video
 	 */
 	private static boolean extractSRT(String videoPath) {
 		File ffmpegFile = new File(VideoProcessor.class.getResource("/ffmpeg/ffmpeg.exe").getFile());
 		String ffmpegPath = ffmpegFile.getAbsolutePath();
 		
-		// build process with command for extracting 1st subtitle stream from video (mp4 format), output file name=sub.srt, auto-overwrite
+		// Build process with command for extracting 1st subtitle stream from video (mp4 format), output file name=sub.srt, auto-overwrite
 		try {
 			ProcessBuilder pb = new ProcessBuilder(ffmpegPath, "-i", videoPath, "-an", "-vn", "-c:s:0", "srt", "-y", "sub.srt");
 			pb.redirectOutput(Redirect.INHERIT);
@@ -151,9 +148,6 @@ public class VideoProcessor {
 						double sShotTimestamp = vid.get(Videoio.CAP_PROP_POS_MSEC);
 						vid.set(Videoio.CAP_PROP_POS_FRAMES, Double.parseDouble(frameNumbers[1]));
 						double eShotTimestamp = vid.get(Videoio.CAP_PROP_POS_MSEC);
-//						System.out.println("stimestamp: "+sShotTimestamp+"");
-//						System.out.println("ctimestamp: "+cShotTimestamp+"");
-//						System.out.println("etimestamp: "+eShotTimestamp+"");
 						allFrameImgs.add(new KeyFrame(opencvImg, cShotTimestamp, sShotTimestamp, eShotTimestamp));
 					}
 				}
@@ -174,6 +168,10 @@ public class VideoProcessor {
 		return allKeyFrames;
 	}
 	
+	/**
+	 * Not using. Now Assume only the biggest detected face in key frame image
+	 * as speaker.
+	 */
 	public static void detectAndSetSubtitleSpeakers(String videoPath) {
 		File opencvDll = new File(VideoProcessor.class.getResource("/opencv/opencv_java310.dll").getFile());
 		String openCVPath = opencvDll.getAbsolutePath();
@@ -195,7 +193,7 @@ public class VideoProcessor {
 				System.out.println("CAP_PROP_POS_MSEC: "+vid.get(Videoio.CAP_PROP_POS_MSEC));
 				while (vid.get(Videoio.CAP_PROP_POS_FRAMES)<=eFrame) {
 					vid.read(opencvImg);
-					// subtitle end time may exceed end of video
+					// Subtitle end time may exceed end of video
 					if (opencvImg.empty()) {
 						break;
 					}

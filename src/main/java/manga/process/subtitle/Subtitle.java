@@ -56,9 +56,11 @@ public class Subtitle {
 	public static String getLinkedSubtitlesText(ArrayList<Subtitle> subtitles) {
 		String linkedSubtitlesText = "";
 		for (Subtitle subtitle: subtitles) {
-			System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subTextCounter, subtitle.sTime ,subtitle.eTime, subtitle.text);
+			//System.out.printf("%d sTime:%f eTime:%f text:%s\n", ++subTextCounter, subtitle.sTime ,subtitle.eTime, subtitle.text);
 			linkedSubtitlesText = linkedSubtitlesText + subtitle.text +" ";
 		}
+//		System.out.printf("%d sTime:%f eTime:%f linked text:%s\n", ++subTextCounter, 
+//				subtitles.get(0).sTime ,subtitles.get(subtitles.size()-1).eTime, linkedSubtitlesText);
 		return linkedSubtitlesText;
 	}
 	
