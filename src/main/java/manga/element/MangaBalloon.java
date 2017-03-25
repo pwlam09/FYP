@@ -197,9 +197,14 @@ public class MangaBalloon {
 	        // Remove extra new line and space
             //drawPosY = drawPosY - layout.getAscent() - layout.getDescent() - layout.getLeading();
             
-            // Calculate new balloon width and height based on text bound
-			newBalloonW = 2 * Math.sqrt(newTextBoundW / 2 * (newTextBoundW / 2 + drawPosY / 2));
-			newBalloonH = 2 * Math.sqrt(drawPosY / 2 * (newTextBoundW / 2 + drawPosY / 2));
+            // Old equations
+//			newBalloonW = 2 * Math.sqrt(newTextBoundW / 2 * (newTextBoundW / 2 + drawPosY / 2));
+//			newBalloonH = 2 * Math.sqrt(drawPosY / 2 * (newTextBoundW / 2 + drawPosY / 2));
+			
+	        // Calculate new balloon width and height based on text bound
+			newBalloonW = 2 * 2 * (newTextBoundW / 2) / Math.sqrt(2);
+			newBalloonH = 2 * 2 * (drawPosY / 2) / Math.sqrt(2);
+			
 			currBalloon = new WordBalloon(initialX, initialY, newBalloonW, newBalloonH);
 			
 			// If balloon width is already shorter than balloon height and 
