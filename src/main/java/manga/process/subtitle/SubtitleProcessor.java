@@ -217,7 +217,7 @@ public class SubtitleProcessor {
 							i++;
 						}
 					}
-					System.out.println("Grouped subtitle: "+Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker));
+//					System.out.println("Grouped subtitle: "+Subtitle.getLinkedSubtitlesText(subtitlesOfSameSpeaker));	//testing
 					summarizedSubtitle = SubtitleCompressor.summarizeSubtitles(subtitlesOfSameSpeaker);
 					summarizedSubtitles.add(summarizedSubtitle);
 				}

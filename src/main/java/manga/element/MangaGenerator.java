@@ -49,7 +49,7 @@ public final class MangaGenerator {
 		
 		// group and compress subtitles with reference to key frames and subtitles
 		SubtitleProcessor.groupAndSummarizeSubtitles();
-		SubtitleProcessor.printAllProcessedSubtitles();	// testing
+//		SubtitleProcessor.printAllProcessedSubtitles();	// testing
 	}
 	
 	public static double getCurrTimestamp() {

@@ -27,3 +27,5 @@ To start the program from an IDE, use **pixelitor.Pixelitor** as the main class.
 - This program is tested under Windows. The performance is not guaranteed under other environments.
 - Maximum time length of video input is 10 minutes.
 - High quality video input takes much longer time (can be 30 minutes or more) to process. Please consider compressing the video if it is 720p or higher.
+- For efficiency, the program will skip video analysis if associated .srt and .txt files for key frame extraction are detected. If you wish to rerun the key frame analysis tool, please remove the .srt and .txt file in the same directory of your input video.
+- Error message related to "SLF4J" can be ignored.
