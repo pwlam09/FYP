@@ -686,7 +686,7 @@ public class SubtitleCompressor {
 						// Get the sentences id of this node
 						Set<Integer> ids = new HashSet<>();
 						if (selected != null) {
-							selected.getSentenceIdSet();
+							ids = selected.getSentenceIdSet();
 						}
 						
 						// Test if there is no loop
@@ -783,7 +783,7 @@ public class SubtitleCompressor {
 					// Get the sentences id of this node
 					Set<Integer> ids = new HashSet<>();
 					if (selected != null)
-						selected.getSentenceIdSet();
+						ids = selected.getSentenceIdSet();
 					
 					// Update the node in the graph if not same sentence and
 					// there is at least one overlap in context
