@@ -29,3 +29,16 @@ To start the program from an IDE, use **pixelitor.Pixelitor** as the main class.
 - High quality video input takes much longer time (can be 30 minutes or more) to process. Please consider compressing the video if it is 720p or higher.
 - For efficiency, the program will skip video analysis if associated .srt and .txt files for key frame extraction are detected. If you wish to rerun the key frame analysis tool, please remove the .srt and .txt file in the same directory of your input video.
 - Error message related to "SLF4J" can be ignored.
+
+## Basic Program Structure
+
+List of new packages
+- manga.detect
+- manga.element
+- manga.process.subtitle
+- manga.process.video
+
+Two additional new classes
+- pixelitor.tools.shapes.WordBalloon
+- pixelitor.layers.MangaText
+  
